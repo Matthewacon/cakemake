@@ -12,7 +12,7 @@ if(SUITE_NAME_LENGTH EQUAL 0)
 endif()
 unset(SUITE_NAME_LENGTH)
 
-#TODO Adds a function to the test suite
+#Adds a function to the test suite
 function(define_test dt_TEST_NAME)
  #Validate test name
  string(LENGTH "${dt_TEST_NAME}" dt_TEST_NAME_LENGTH)
@@ -24,6 +24,7 @@ function(define_test dt_TEST_NAME)
  endif()
  unset(dt_TEST_NAME_LENGTH)
 
+ #TODO Fix regex
  #Ensure test name does not contain whitespace
  string(
   REGEX
@@ -44,27 +45,26 @@ function(define_test dt_TEST_NAME)
 
  #Append test to suite
  list(APPEND ALL_TESTS "${dt_TEST_NAME}")
+
+ #Propagate changes to parent scope
+ set(ALL_TESTS "${ALL_TESTS}" PARENT_SCOPE)
+endfunction()
+
+#[[
+ TODO Internal utility function to print helpful information about failed
+ assertions
+]]
+function(__fail_assertion fa_MESSAGE)
 endfunction()
 
 #TODO Simple string-wise equality assertion for tests
 function(assert_equals ae_EXPECTED ae_VALUE)
-
 endfunction()
 
-#TODO Runs all the tests in `${ALL_TESTS}`
-function(run_test_suite)
- #Succeed if no tests are defined
- string(LENGTH "${ALL_TESTS}" ALL_TESTS_LENGTH)
- if(ALL_TESTS_LENGTH EQUAL 0)
-  message("No tests defined for suite '${SUITE_NAME}'!")
-  return()
- endif()
- unset(ALL_TESTS_LENGTH)
+#TODO
+function(assert_true at_VALUE)
+endfunction()
 
- #TODO Run all tests
- message(STATUS "Running test suite '${SUITE_NAME}'...")
- foreach(TEST ${ALL_TESTS})
-
- endforeach()
- message(STATUS "Completed test suite '${SUITE_NAME}'!")
+#TODO
+function(assert_false af_VALUE)
 endfunction()
