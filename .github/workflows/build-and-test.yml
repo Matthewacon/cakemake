@@ -6,7 +6,7 @@ jobs:
     name: Configure, build and run tests
     steps:
       - uses: actions/checkout@v1
-      - uses: cakemake/alpine-cmake
+      - uses: cakemake/alpine-cmake@main
       - name: Configure build
         run: |
           mkdir build \
