@@ -1,0 +1,5 @@
+name: cmake-alpine
+description: An alpine image with cmake and GNU make
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

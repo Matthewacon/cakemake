@@ -1,0 +1,18 @@
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Configure, build and run tests
+    steps:
+      - uses: actions/checkout@v1
+      - name: Configure build
+        uses: cakemake/alpine-cmake
+        run: |
+          mkdir build \
+          && cd build \
+          && cmake ..
+      - name: Build
+        run: make
+      - name: Test
+        run: make test
