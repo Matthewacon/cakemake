@@ -1,9 +1,9 @@
 on: [push, pull_request]
 
 jobs:
-  build:
+  configure:
     runs-on: ubuntu-latest
-    name: Configure, build and run tests
+    name: Configure build
     steps:
       - uses: actions/checkout@v1
       - uses: ./.github/actions/alpine-cmake
@@ -12,9 +12,35 @@ jobs:
           mkdir build \
           && cd build \
           && cmake ..
+      - uses: actions/upload@v1
+        with:
+          name: configure-artifacts
+          path: build/
+  build:
+    needs: [configure]
+    runs-on: ubuntu-latest
+    name: Build project
+    steps:
+      - uses: actions/download@v1
+        with:
+          name: configure-artifacts
+          path: build/
       - name: Build
         working-directory: build
         run: make
+      - uses: actions/upload@v1
+        with:
+          name: build-artifacts
+          path: build/
+  test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: Run tests
+    steps:
+      - uses: actions/download@v1
+        with:
+          name: build-artifacts
+          path: build/
       - name: Test
         working-directory: build
         run: make test
