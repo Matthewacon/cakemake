@@ -1,0 +1,52 @@
+on: [push, pull_request]
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    name: Configure build
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/alpine-cmake
+      - name: Configure build
+        run: |
+          mkdir build \
+          && cd build \
+          && cmake ..
+      - uses: actions/upload-artifact@v1
+        with:
+          name: configure-artifacts
+          path: build/
+  build:
+    needs: [configure]
+    runs-on: ubuntu-latest
+    name: Build project
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/download-artifact@v1
+        with:
+          name: configure-artifacts
+          path: build/
+      - name: Build
+        working-directory: build
+        run: make
+      - uses: actions/upload-artifact@v1
+        with:
+          name: build-artifacts
+          path: build/
+  test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: Run tests
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/download-artifact@v1
+        with:
+          name: build-artifacts
+          path: build/
+      - name: Test
+        working-directory: build
+        run: make test
+      - uses: actions/upload-artifact@v1
+        with:
+          name: test-artifacts
+          path: .
