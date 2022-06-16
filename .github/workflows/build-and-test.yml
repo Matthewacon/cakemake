@@ -12,7 +12,7 @@ jobs:
           mkdir build \
           && cd build \
           && cmake ..
-      - uses: actions/upload@v1
+      - uses: actions/upload-artifact@v1
         with:
           name: configure-artifacts
           path: build/
@@ -21,14 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Build project
     steps:
-      - uses: actions/download@v1
+      - uses: actions/download-artifact@v1
         with:
           name: configure-artifacts
           path: build/
       - name: Build
         working-directory: build
         run: make
-      - uses: actions/upload@v1
+      - uses: actions/upload-artifact@v1
         with:
           name: build-artifacts
           path: build/
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Run tests
     steps:
-      - uses: actions/download@v1
+      - uses: actions/download-artifact@v1
         with:
           name: build-artifacts
           path: build/
