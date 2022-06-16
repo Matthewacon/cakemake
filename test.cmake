@@ -50,21 +50,53 @@ function(define_test dt_TEST_NAME)
  set(ALL_TESTS "${ALL_TESTS}" PARENT_SCOPE)
 endfunction()
 
-#[[
- TODO Internal utility function to print helpful information about failed
- assertions
-]]
-function(__fail_assertion fa_MESSAGE)
+#Internal utility function to print helpful information about failed assertions
+function(__fail_assertion)
+ #Validate message
+ string(LENGTH "${ARGN}" fa_MESSAGE_LENGTH)
+ if(fa_MESSAGE_LENGTH EQUAL 0)
+  message(
+   FATAL_ERROR
+   "Assertion message cannot be empty!"
+  )
+ endif()
+
+ #Emit diagnostic for failed assertion
+ message(
+  ${ARGN}
+ )
+ message(FATAL_ERROR "Assertion failed (see diagnostic above)!")
 endfunction()
 
-#TODO Simple string-wise equality assertion for tests
+#Simple string-wise equality assertion for tests
 function(assert_equals ae_EXPECTED ae_VALUE)
+ if(NOT "${ae_VALUE}" STREQUAL "${ae_EXPECTED}")
+  __fail_assertion(
+   "assert_equals in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
+   "\n expected: '${ae_EXPECTED}'"
+   "\n actual:   '${ae_VALUE}'"
+  )
+ endif()
 endfunction()
 
-#TODO
+#Simple truthy assertion. Uses CMake truthy values: [1, ON, YES, TRUE, Y]
 function(assert_true at_VALUE)
+ if(NOT ${at_VALUE})
+  __fail_assertion(
+   "assert_true in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
+   "\n expected: any of [1, ON, YES, TRUE, Y]"
+   "\n actual:   ${at_VALUE}"
+  )
+ endif()
 endfunction()
 
-#TODO
+#Simple falsy assertion. Uses CMake falsy values: [0, OFF, NO, FALSE, N]
 function(assert_false af_VALUE)
+ if(${af_VALUE})
+  __fail_assertion(
+  "assert_true in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
+   "\n expected: (any of)[0, OFF, NO, FALSE, N]"
+   "\n actual:   ${af_VALUE}"
+  )
+ endif()
 endfunction()
