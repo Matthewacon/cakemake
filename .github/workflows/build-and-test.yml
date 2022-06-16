@@ -46,3 +46,7 @@ jobs:
       - name: Test
         working-directory: build
         run: make test
+      - uses: actions/upload-artifact@v1
+        with:
+          name: test-artifacts
+          path: .
