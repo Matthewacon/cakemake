@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build project
     steps:
+      - uses: actions/checkout@v1
       - uses: actions/download-artifact@v1
         with:
           name: configure-artifacts
@@ -37,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Run tests
     steps:
+      - uses: actions/checkout@v1
       - uses: actions/download-artifact@v1
         with:
           name: build-artifacts
