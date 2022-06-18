@@ -13,6 +13,7 @@ jobs:
           && cd build \
           && cmake ..
       - uses: actions/upload-artifact@v1
+        if: always()
         with:
           name: configure-artifacts
           path: build/
@@ -30,6 +31,7 @@ jobs:
         working-directory: build
         run: make
       - uses: actions/upload-artifact@v1
+        if: always()
         with:
           name: build-artifacts
           path: build/
@@ -46,7 +48,12 @@ jobs:
       - name: Test
         working-directory: build
         run: make test
+      - name: Show test output
+        if: always()
+        working-directory: build
+        run: cat Testing/Temporary/LastTest.log
       - uses: actions/upload-artifact@v1
+        if: always()
         with:
           name: test-artifacts
           path: .
