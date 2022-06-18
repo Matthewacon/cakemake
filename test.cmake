@@ -36,7 +36,7 @@ function(define_test dt_TEST_NAME)
  cmake_parse_arguments(
   dt
   "EXPECT_FAIL"
-  ""
+  "REGEX"
   ""
   ${ARGN}
  )
@@ -44,7 +44,19 @@ function(define_test dt_TEST_NAME)
  #Set expected failure flag for test if `EXPECT_FAIL` flag specified
  if(dt_EXPECT_FAIL)
   set("${dt_TEST_NAME}_EXPECT_FAIL" TRUE PARENT_SCOPE)
+  set(dt_REGEX_TEST_PROPERTY "FAIL_REGEX")
+ else()
+  set(dt_REGEX_TEST_PROPERTY "PASS_REGEX")
  endif()
+
+ #[[
+  Set expected condition regex, if specified. Sets pass or fail regex based on
+  the `EXPECT_FAIL` option flag
+ ]]
+ if(DEFINED dt_REGEX)
+  set("${dt_TEST_NAME}_${dt_REGEX_TEST_PROPERTY}" "${dt_REGEX}" PARENT_SCOPE)
+ endif()
+ unset(dt_REGEX_TEST_PROPERTY)
 
  #TODO Fix regex
  #Ensure test name does not contain whitespace

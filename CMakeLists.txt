@@ -133,6 +133,26 @@ foreach(TEST_SUITE_PATH ${CMAKE_TEST_SUITES})
    )
   endif()
 
+  #Set pass regex property for test, if defined
+  if(DEFINED "${TEST_NAME}_PASS_REGEX")
+   set_tests_properties(
+    "${SUITE_NAME}::${TEST_NAME}"
+    PROPERTIES
+     PASS_REGULAR_EXPRESSION "${${TEST_NAME}_PASS_REGEX}"
+   )
+   unset("${TEST_NAME}_PASS_REGEX")
+  endif()
+
+  #Set fail regex property for test, if defined
+  if(DEFINED "${TEST_NAME}_FAIL_REGEX")
+   set_tests_properties(
+    "${SUITE_NAME}::${TEST_NAME}"
+    PROPERTIES
+     FAIL_REGULAR_EXPRESSION "${${TEST_NAME}_FAIL_REGEX}"
+   )
+   unset("${TEST_NAME}_FAIL_REGEX")
+  endif()
+
   #Clean up executor path variable
   unset("${TEST_EXECUTOR_PATH_VARIABLE}")
   unset(TEST_EXECUTOR_PATH_VARIABLE)

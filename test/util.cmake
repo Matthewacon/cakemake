@@ -20,6 +20,7 @@ function(is_name_unique_yields_expected_result_for_command_condition)
  #Test for existing command
  is_name_unique(is_name_unique COMMAND exists)
  assert_false(${exists})
+
 endfunction()
 define_test(is_name_unique_yields_expected_result_for_command_condition)
 
@@ -91,6 +92,7 @@ function(assert_name_unique_raises_error_on_existing_command_condition)
 endfunction()
 define_test(
  assert_name_unique_raises_error_on_existing_command_condition
+ REGEX "assert_name_unique: 'assert_name_unique' is not a unique COMMAND!"
  EXPECT_FAIL
 )
 
@@ -108,16 +110,18 @@ function(assert_name_unique_raises_error_on_existing_variable_condition)
 endfunction()
 define_test(
  assert_name_unique_raises_error_on_existing_variable_condition
+ REGEX "assert_name_unique: 'VAR1' is not a unique VARIABLE!"
  EXPECT_FAIL
 )
 
 function(assert_name_unique_raises_error_on_existing_cache_variable_condition)
  unset(VAR1 CACHE)
- set(VAR1 "" CACHE "")
+ set(VAR1 "" CACHE STRING "")
  assert_name_unique(VAR1 VARIABLE)
 endfunction()
 define_test(
  assert_name_unique_raises_error_on_existing_cache_variable_condition
+ REGEX "assert_name_unique: 'VAR1' is not a unique VARIABLE!"
  EXPECT_FAIL
 )
 
@@ -130,11 +134,12 @@ define_test(assert_name_unique_does_not_fail_on_nonexistent_cache_condition)
 
 function(assert_name_unique_raises_error_on_existing_cache_condition)
  unset(VAR1 CACHE)
- set(VAR1 "" CACHE "")
+ set(VAR1 "" CACHE STRING "")
  assert_name_unique(VAR1 CACHE)
 endfunction()
 define_test(
  assert_name_unique_raises_error_on_existing_cache_condition
+ REGEX "assert_name_unique: 'VAR1' is not a unique CACHE!"
  EXPECT_FAIL
 )
 
@@ -158,7 +163,11 @@ define_test(assert_name_unique_does_not_fail_on_nonexistent_env_condition)
 
 function(assert_name_unique_raises_error_on_existing_env_condition)
  unset(ENV{VAR1})
- set(ENV{VAR1} "")
+ set(ENV{VAR1} " ")
  assert_name_unique(VAR1 ENV)
 endfunction()
-define_test(assert_name_unique_raises_error_on_existing_env_condition)
+define_test(
+ assert_name_unique_raises_error_on_existing_env_condition
+ REGEX "assert_name_unique: 'VAR1' is not a unique ENV!"
+ EXPECT_FAIL
+)
