@@ -24,6 +24,28 @@ function(define_test dt_TEST_NAME)
  endif()
  unset(dt_TEST_NAME_LENGTH)
 
+ #Ensure test exists
+ if(NOT COMMAND "${dt_TEST_NAME}")
+  message(
+   FATAL_ERROR
+   "test.cmake (define_test): Test function '${dt_TEST_NAME}' does not exist!"
+  )
+ endif()
+
+ #Parse flags
+ cmake_parse_arguments(
+  dt
+  "EXPECT_FAIL"
+  ""
+  ""
+  ${ARGN}
+ )
+
+ #Set expected failure flag for test if `EXPECT_FAIL` flag specified
+ if(dt_EXPECT_FAIL)
+  set("${dt_TEST_NAME}_EXPECT_FAIL" TRUE PARENT_SCOPE)
+ endif()
+
  #TODO Fix regex
  #Ensure test name does not contain whitespace
  string(
@@ -50,6 +72,20 @@ function(define_test dt_TEST_NAME)
  set(ALL_TESTS "${ALL_TESTS}" PARENT_SCOPE)
 endfunction()
 
+#[[
+ Internal utility function to ensure that tests are only executed by the test
+ runner CMake scripts emitted during build
+]]
+function(__assert_in_runner)
+ if(NOT DEFINED CURRENT_SUITE OR NOT DEFINED CURRENT_TEST)
+  message(
+   FATAL_ERROR
+   "Tests cannot be run directly, they must use the runner CMake scripts "
+   "generated during the build!"
+  )
+ endif()
+endfunction()
+
 #Internal utility function to print helpful information about failed assertions
 function(__fail_assertion)
  #Validate message
@@ -70,6 +106,7 @@ endfunction()
 
 #Simple string-wise equality assertion for tests
 function(assert_equals ae_EXPECTED ae_VALUE)
+ __assert_in_runner()
  if(NOT "${ae_VALUE}" STREQUAL "${ae_EXPECTED}")
   __fail_assertion(
    "assert_equals in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
@@ -81,6 +118,7 @@ endfunction()
 
 #Simple truthy assertion. Uses CMake truthy values: [1, ON, YES, TRUE, Y]
 function(assert_true at_VALUE)
+ __assert_in_runner()
  if(NOT ${at_VALUE})
   __fail_assertion(
    "assert_true in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
@@ -92,9 +130,10 @@ endfunction()
 
 #Simple falsy assertion. Uses CMake falsy values: [0, OFF, NO, FALSE, N]
 function(assert_false af_VALUE)
+ __assert_in_runner()
  if(${af_VALUE})
   __fail_assertion(
-  "assert_true in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
+  "assert_false in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
    "\n expected: (any of)[0, OFF, NO, FALSE, N]"
    "\n actual:   ${af_VALUE}"
   )

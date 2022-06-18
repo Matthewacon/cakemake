@@ -123,6 +123,16 @@ foreach(TEST_SUITE_PATH ${CMAKE_TEST_SUITES})
    COMMAND ${CMAKE_COMMAND} -P "${${TEST_EXECUTOR_PATH_VARIABLE}}"
   )
 
+  #Set expected failure for test if `${TEST_NAME}_EXPECT_FAIL` is defined
+  if(DEFINED "${TEST_NAME}_EXPECT_FAIL")
+   unset("${TEST_NAME}_EXPECT_FAIL")
+   set_tests_properties(
+    "${SUITE_NAME}::${TEST_NAME}"
+    PROPERTIES
+     WILL_FAIL TRUE
+   )
+  endif()
+
   #Clean up executor path variable
   unset("${TEST_EXECUTOR_PATH_VARIABLE}")
   unset(TEST_EXECUTOR_PATH_VARIABLE)
