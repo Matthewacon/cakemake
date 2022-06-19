@@ -9,7 +9,6 @@ include("${CMAKE_CURRENT_LIST_DIR}/../test.cmake")
 #Include script to test
 include("${CMAKE_CURRENT_LIST_DIR}/../src/util.cmake")
 
-
 ##`is_name_unique` tests
 #`COMMAND` condition test
 function(is_name_unique_yields_expected_result_for_command_condition)
@@ -171,3 +170,89 @@ define_test(
  REGEX "assert_name_unique: 'VAR1' is not a unique ENV!"
  EXPECT_FAIL
 )
+
+##`is_empty` tests
+function(is_empty_no_argument_yields_true)
+ is_empty(empty)
+ assert_true(${empty})
+endfunction()
+define_test(is_empty_no_argument_yields_true)
+
+function(is_empty_with_arguments_yields_false)
+ is_empty(empty "Hello world!")
+ assert_false(${empty})
+
+ is_empty(empty 1 2 3)
+ assert_false(${empty})
+endfunction()
+define_test(is_empty_with_arguments_yields_false)
+
+##`get_project_prefix` tests
+function(get_project_prefix_outside_project_scope_yields_expected_value)
+ unset(CMAKE_PROJECT_NAME)
+ get_project_prefix(project_prefix)
+ assert_equals("NO_PROJECT" "${project_prefix}")
+endfunction()
+define_test(get_project_prefix_outside_project_scope_yields_expected_value)
+
+function(get_project_prefix_in_project_scope_yields_project_name)
+ unset(CMAKE_PROJECT_NAME)
+ set(CMAKE_PROJECT_NAME "example_project")
+ string(TOUPPER "${CMAKE_PROJECT_NAME}" expected_value)
+ get_project_prefix(project_prefix)
+ assert_equals("${expected_value}" "${project_prefix}")
+ unset(expected_value)
+endfunction()
+define_test(get_project_prefix_in_project_scope_yields_project_name)
+
+##`generate_unique_name` tests
+function(generate_unique_name_yields_expected_value_for_command_condition)
+ #Test for existing command
+ generate_unique_name(set COMMAND unique_name)
+ assert_not_equals(set "${unique_name}")
+
+ #Test for non-existent command
+ generate_unique_name(abcd COMMAND unique_name)
+ assert_equals(abcd "${unique_name}")
+endfunction()
+define_test(generate_unique_name_yields_expected_value_for_command_condition)
+
+function(generate_unique_name_yields_expected_value_for_variable_condition)
+ #Test for existing variable
+ set(VAR1 "")
+ generate_unique_name(VAR1 VARIABLE unique_name)
+ assert_not_equals(VAR1 "${unique_name}")
+
+ #Test for existing cache variable
+ set(VAR2 "" CACHE STRING "")
+ generate_unique_name(VAR2 VARIABLE unique_name)
+ assert_not_equals(VAR2 "${unique_name}")
+
+ #Test for non-existent variable
+ unset(VAR3)
+ generate_unique_name(VAR3 VARIABLE unique_name)
+ assert_equals(VAR3 "${unique_name}")
+endfunction()
+define_test(generate_unique_name_yields_expected_value_for_variable_condition)
+
+function(generate_unique_name_yields_expected_value_for_cache_condition)
+ #Test for existing cache variable
+ set(VAR1 "" CACHE STRING "")
+ generate_unique_name(VAR1 CACHE unique_name)
+ assert_not_equals(VAR1 "${unique_name}")
+
+ #Test for existing variable
+ set(VAR2 "")
+ generate_unique_name(VAR2 CACHE unique_name)
+ assert_equals(VAR2 "${unique_name}")
+
+ #Test for non-existent cache variable
+ unset(VAR3 CACHE)
+ generate_unique_name(VAR3 CACHE unique_name)
+ assert_equals(VAR3 "${unique_name}")
+endfunction()
+define_test(generate_unique_name_yields_expected_value_for_cache_condition)
+
+function(generate_unique_name_yields_expected_value_for_env_condition)
+endfunction()
+define_test(generate_unique_name_yields_expected_value_for_env_condition)

@@ -128,6 +128,19 @@ function(assert_equals ae_EXPECTED ae_VALUE)
  endif()
 endfunction()
 
+#Simple string-wise non-equality assertion for tests
+function(assert_not_equals ae_NEGATIVE_MATCH ae_VALUE)
+ __assert_in_runner()
+ if("${ae_VALUE}" STREQUAL "${ae_NEGATIVE_MATCH}")
+  message(
+   FATAL_ERROR
+   "assert_not_equals in test '${CURRENT_SUITE}::${CURRENT_TEST}':"
+   "\n not expected: '${ae_NEGATIVE_MATCH}'"
+   "\n actual:       '${ae_VALUE}'"
+  )
+ endif()
+endfunction()
+
 #Simple truthy assertion. Uses CMake truthy values: [1, ON, YES, TRUE, Y]
 function(assert_true at_VALUE)
  __assert_in_runner()
