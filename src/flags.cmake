@@ -174,13 +174,6 @@ function(add_build_flag abf_FLAG)
   abf_print_help(FATAL_ERROR "'FORCE' can only be set alongside 'CACHE'!")
  endif()
 
- #Set up `abf_FORCE` for set call
- if(abf_FORCE)
-  set(abf_FORCE " FORCE")
- else()
-  unset(abf_FORCE)
- endif()
-
  #Append argument to `project()` scope of build arguments
  list(APPEND "${abf_BUILD_FLAGS_LIST_VAR}" "${abf_FLAG}")
  set(
@@ -201,15 +194,28 @@ function(add_build_flag abf_FLAG)
   set(abf_FLAG_DESCRIPTION "[no description provided]")
  endif()
  set("${abf_FLAG_DESCRIPTION_VARIABLE}" "${abf_FLAG_DESCRIPTION}" PARENT_SCOPE)
- unset(abf_FLAG_DESCRIPTION)
  unset(abf_FLAG_DESCRIPTION_VARIABLE)
 
  #Set flag value and description
  if(DEFINED abf_CACHE)
-  set(${abf_FLAG} ${abf_VALUE} CACHE ${abf_CACHE} "${abf_FORCE}")
+  if(DEFINED abf_FORCE)
+   set(
+    ${abf_FLAG} ${abf_VALUE}
+    CACHE ${abf_CACHE}
+    "${abf_FLAG_DESCRIPTION}"
+    FORCE
+   )
+  else()
+   set(
+    ${abf_FLAG} ${abf_VALUE}
+    CACHE ${abf_CACHE}
+    "${abf_FLAG_DESCRIPTION}"
+   )
+  endif()
  else()
   set(${abf_FLAG} ${abf_VALUE} PARENT_SCOPE)
  endif()
+ unset(abf_FLAG_DESCRIPTION)
 endfunction()
 
 #Adds a non-configurable build flag with a fixed value

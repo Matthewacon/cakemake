@@ -72,8 +72,117 @@ function(does_build_flag_exist_existing_flag_yields_true)
 endfunction()
 define_test(does_build_flag_exist_existing_flag_yields_true)
 
+##TODO `add_build_flag` tests
+function(add_build_flag_invalid_flag_name_raises_error)
+ add_build_flag("")
+endfunction()
+define_test(
+ add_build_flag_invalid_flag_name_raises_error
+ REGEX "Flag name cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(add_build_flag_with_no_value_unsets_flag_value)
+ set(some_flag "Example value")
+ add_build_flag(some_flag)
+ if(DEFINED some_flag)
+  message(
+   FATAL_ERROR
+   "Expected variable 'some_flag' to be unset!"
+  )
+ endif()
+endfunction()
+define_test(add_build_flag_with_no_value_unsets_flag_value)
+
+function(add_build_flag_with_value_sets_value)
+ #Get project flags list var
+ get_project_flags_variable(flags_list_var)
+
+ #Add flag
+ unset(some_flag)
+ add_build_flag(some_flag VALUE "Hello world!")
+
+ #Ensure flag was added to project flags list var
+ list(FIND "${flags_list_var}" some_flag exists)
+ assert_not_equals(-1 ${exists})
+
+ #Ensure flag was updated with correct value
+ assert_equals("Hello world!" "${some_flag}")
+endfunction()
+define_test(add_build_flag_with_value_sets_value)
+
+function(add_build_flag_with_multiple_values_appends_to_list)
+ #Get project flags list var
+ get_project_flags_variable(flags_list_var)
+
+ #Add flag
+ unset(some_flag)
+ add_build_flag(some_flag VALUE 1 2 3 4 5)
+
+ #Ensure flag was added to project flags list var
+ list(FIND "${flags_list_var}" some_flag exists)
+ assert_not_equals(-1 ${exists})
+
+ #Ensure flag was updated with correct value
+ assert_equals("1;2;3;4;5" "${some_flag}")
+endfunction()
+define_test(add_build_flag_with_multiple_values_appends_to_list)
+
+function(
+ add_build_flag_without_description_named_parameter_uses_default_description
+)
+ #Get project flags list var
+ get_project_flags_variable(flags_list_var)
+ set(FLAGS_DESCRIPTION_VAR "${flags_list_var}_some_flag_DESCRIPTION")
+
+ #Add flag
+ add_build_flag(some_flag)
+
+ #Ensure flag description matches default
+ assert_equals("[no description provided]" "${${FLAGS_DESCRIPTION_VAR}}")
+endfunction()
+define_test(
+add_build_flag_without_description_named_parameter_uses_default_description
+)
+
+function(add_build_flag_with_description_named_parameter_sets_description)
+ #Get name of flag description variable
+ get_project_flags_variable(project_flags_list_var)
+ set(DESCRIPTION_VAR "${project_flags_list_var}_some_flag_DESCRIPTION")
+
+ add_build_flag(
+  some_flag
+  DESCRIPTION "Some flag"
+ )
+ assert_equals("Some flag" "${${DESCRIPTION_VAR}}")
+endfunction()
+define_test(add_build_flag_with_description_named_parameter_sets_description)
+
+function(
+ add_build_flag_with_force_option_and_not_cache_named_parameter_raises_error
+)
+ add_build_flag(some_var FORCE)
+endfunction()
+define_test(
+ add_build_flag_with_force_option_and_not_cache_named_parameter_raises_error
+ REGEX "'FORCE' can only be set alongside 'CACHE'!"
+ EXPECT_FAIL
+)
+
+function(add_build_flag_with_cache_named_parameter_sets_up_cache_variable)
+ add_build_flag(some_flag VALUE "Hello world!" CACHE STRING)
+
+ if(NOT DEFINED CACHE{some_flag})
+  message(
+   FATAL_ERROR
+   "'CACHE' named parameter did not set up cache flag value!"
+  )
+ endif()
+ assert_equals("Hello world!" "${some_flag}")
+endfunction()
+define_test(add_build_flag_with_cache_named_parameter_sets_up_cache_variable)
+
 #[[TODO
- - add_build_flag
  - add_fixed_build_flag
  - is_build_flag_configurable
  - get_build_flag_list
