@@ -192,7 +192,7 @@ define_test(
  EXPECT_FAIL
 )
 
-##TODO `add_fixed_build_flag` tests
+##`add_fixed_build_flag` tests
 function(add_fixed_build_flag_invalid_flag_name_raises_error)
  add_fixed_build_flag("")
 endfunction()
@@ -336,10 +336,201 @@ define_test(
  EXPECT_FAIL
 )
 
-#[[TODO
- - is_build_flag_configurable
- - get_build_flag_list
- - get_build_flag
- - get_build_flag_description
- - get_build_flags_pretty
-]]
+##`is_build_flag_configurable` tests
+function(is_build_flag_configurable_add_build_flag_yields_true)
+ add_build_flag(example_flag)
+ is_build_flag_configurable(example_flag is_configurable)
+ assert_true(${is_configurable})
+endfunction()
+define_test(is_build_flag_configurable_add_build_flag_yields_true)
+
+function(is_build_flag_configurable_add_fixed_build_flag_yields_false)
+ add_fixed_build_flag(example_flag)
+ is_build_flag_configurable(example_flag is_configurable)
+ assert_false(${is_configurable})
+endfunction()
+define_test(is_build_flag_configurable_add_fixed_build_flag_yields_false)
+
+##`get_build_flag_list` tests
+function(get_build_flag_list_yields_empty_list_when_no_build_flags_are_present)
+ get_build_flag_list(flag_list)
+ assert_equals("" "${flag_list}")
+endfunction()
+define_test(
+ get_build_flag_list_yields_empty_list_when_no_build_flags_are_present
+)
+
+function(
+ get_build_flag_list_yields_expected_value_when_build_flags_are_present
+)
+ add_build_flag(flag1)
+ add_fixed_build_flag(flag2)
+ add_fixed_build_flag(flag3)
+ add_build_flag(flag4)
+ get_build_flag_list(flag_list)
+ assert_equals("flag1;flag2;flag3;flag4" "${flag_list}")
+endfunction()
+define_test(
+ get_build_flag_list_yields_expected_value_when_build_flags_are_present
+)
+
+##`get_build_flag` tests
+function(get_build_flag_with_invalid_flag_name_raises_error)
+ get_build_flag("" "")
+endfunction()
+define_test(
+ get_build_flag_with_invalid_flag_name_raises_error
+ REGEX "Flag name cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(get_build_flag_with_invalid_destination_variable_name_raises_error)
+ add_build_flag(some_flag)
+ get_build_flag(some_flag "")
+endfunction()
+define_test(
+ get_build_flag_with_invalid_destination_variable_name_raises_error
+ REGEX "Destination variable name cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(get_build_flag_with_nonexistent_flag_raises_error)
+ get_build_flag(some_flag value)
+endfunction()
+define_test(
+ get_build_flag_with_nonexistent_flag_raises_error
+ REGEX "Flag 'some_flag' does not exist!"
+ EXPECT_FAIL
+)
+
+function(get_build_flag_with_existing_flag_yields_expected_value)
+ add_build_flag(flag1 VALUE "Hello world!")
+ get_build_flag(flag1 value1)
+ assert_equals("Hello world!" "${value1}")
+
+ add_fixed_build_flag(flag2 VALUE "Goodbye world!")
+ get_build_flag(flag2 value2)
+ assert_equals("Goodbye world!" "${value2}")
+endfunction()
+define_test(get_build_flag_with_existing_flag_yields_expected_value)
+
+##`get_build_flag_description` tests
+function(get_build_flag_description_with_invalid_flag_raises_error)
+ get_build_flag_description("" "")
+endfunction()
+define_test(
+ get_build_flag_description_with_invalid_flag_raises_error
+ REGEX "Flag name cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ get_build_flag_description_with_invalid_destination_variable_name_raises_error
+)
+ add_build_flag(some_flag)
+ get_build_flag_description(some_flag "")
+endfunction()
+define_test(
+ get_build_flag_description_with_invalid_destination_variable_name_raises_error
+ REGEX "Destination variable name cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(get_build_flag_description_with_nonexistent_flag_raises_error)
+ get_build_flag_description(some_flag description)
+endfunction()
+define_test(
+ get_build_flag_description_with_nonexistent_flag_raises_error
+ REGEX "Flag 'some_flag' does not exist!"
+ EXPECT_FAIL
+)
+
+function(get_build_flag_description_with_existing_flag_yields_expected_value)
+ #Test with default description
+ add_build_flag(flag1)
+ get_build_flag_description(flag1 description)
+ assert_equals("[no description provided]" "${description}")
+
+ unset(description)
+ add_fixed_build_flag(flag2)
+ get_build_flag_description(flag2 description)
+ assert_equals("[no description provided]" "${description}")
+
+ #Test with specified description
+ unset(description)
+ add_build_flag(flag3 DESCRIPTION "flag3 description")
+ get_build_flag_description(flag3 description)
+ assert_equals("flag3 description" "${description}")
+
+ unset(description)
+ add_fixed_build_flag(flag4 DESCRIPTION "flag4 description")
+ get_build_flag_description(flag4 description)
+ assert_equals("flag4 description" "${description}")
+endfunction()
+define_test(
+ get_build_flag_description_with_existing_flag_yields_expected_value
+)
+
+##`get_build_flags_pretty` tests
+function(get_build_flags_pretty_invalid_destination_variable_name_raises_error)
+ get_build_flags_pretty("")
+endfunction()
+define_test(
+ get_build_flags_pretty_invalid_destination_variable_name_raises_error
+ REGEX "Destination variable name cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(get_build_flags_pretty_with_no_build_flags_yields_expected_value)
+ get_build_flags_pretty(flags_pretty)
+ assert_equals("Build configuration:" "${flags_pretty}")
+endfunction()
+define_test(get_build_flags_pretty_with_no_build_flags_yields_expected_value)
+
+function(
+ get_build_flags_pretty_with_configurable_build_flag_yields_expected_value
+)
+ add_build_flag(example_flag VALUE "Hello world!")
+ get_build_flags_pretty(flags_pretty)
+ string(
+  APPEND expected
+  "Build configuration:"
+  "\n - example_flag: Hello world!"
+ )
+ assert_equals("${expected}" "${flags_pretty}")
+endfunction()
+define_test(
+ get_build_flags_pretty_with_configurable_build_flag_yields_expected_value
+)
+
+function(get_build_flags_pretty_with_unconfigurable_flag_yields_expected_value)
+ add_fixed_build_flag(example_flag VALUE "Hello world!")
+ get_build_flags_pretty(flags_pretty)
+ string(
+  APPEND expected
+  "Build configuration:"
+  "\n - [example_flag]: Hello world!"
+ )
+ assert_equals("${expected}" "${flags_pretty}")
+endfunction()
+define_test(
+ get_build_flags_pretty_with_unconfigurable_flag_yields_expected_value
+)
+
+function(get_build_flags_pretty_with_mixed_flags_yields_expected_value)
+ add_build_flag(flag1)
+ add_fixed_build_flag(flag2 VALUE 123)
+ add_build_flag(flag3 VALUE abc)
+ add_fixed_build_flag(flag4 VALUE "Hello world!")
+ get_build_flags_pretty(flags_pretty)
+ string(
+  APPEND expected
+  "Build configuration:"
+  "\n - flag1:   "
+  "\n - [flag2]: 123"
+  "\n - flag3:   abc"
+  "\n - [flag4]: Hello world!"
+ )
+ assert_equals("${expected}" "${flags_pretty}")
+endfunction()
+define_test(get_build_flags_pretty_with_mixed_flags_yields_expected_value)

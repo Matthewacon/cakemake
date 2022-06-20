@@ -211,6 +211,57 @@ function(is_empty ie_DESTINATION_VARIABLE)
 endfunction()
 
 #[[
+ Escapes the following characters and places the result in the destination
+ variable in the parent scope
+ - \
+ - '\n'
+ - '\t'
+ - '\r'
+ - "
+]]
+function(escape_string es_DESTINATION_VARIABLE)
+ #Ensure destination variable name is valid
+ is_empty(es_DESTINATION_VARIABLE_EMPTY "${es_DESTINATION_VARIABLE}")
+ if(es_DESTINATION_VARIABLE_EMPTY)
+  message(
+   FATAL_ERROR
+   "escape_string: The <DESTINATION_VARIABLE> argument must not be empty!"
+  )
+ endif()
+ unset(es_DESTINATION_VARIABLE_EMPTY)
+
+ #Replace escape sequences and special characters
+ string(
+  REPLACE
+  "\\" "\\\\"
+  es_RESULT_STRING "${ARGN}"
+ )
+ string(
+  REPLACE
+  "\n" "\\n"
+  es_RESULT_STRING "${es_RESULT_STRING}"
+ )
+ string(
+  REPLACE
+  "\t" "\\t"
+  es_RESULT_STRING "${es_RESULT_STRING}"
+ )
+ string(
+  REPLACE
+  "\r" "\\r"
+  es_RESULT_STRING "${es_RESULT_STRING}"
+ )
+ string(
+  REPLACE
+  "\"" "\\\""
+  es_RESULT_STRING "${es_RESULT_STRING}"
+ )
+
+ #Set result on destination variable in parent scope
+ set("${es_DESTINATION_VARIABLE}" "${es_RESULT_STRING}" PARENT_SCOPE)
+endfunction()
+
+#[[
  Generates unique a name to avoid colisions, based on the value of `CONDITION`.
  Defaults to generating random strings of legnth 5, lowercase characters only
  and a search limit of 10000.

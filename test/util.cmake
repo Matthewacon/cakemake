@@ -187,6 +187,43 @@ function(is_empty_with_arguments_yields_false)
 endfunction()
 define_test(is_empty_with_arguments_yields_false)
 
+##`escape_string` tests
+function(
+ escape_string_escapes_the_expected_characters_and_yields_the_expected_result
+)
+ #Ensure string with no replacements is unmodified
+ set(value1 "Hello world!")
+ set(expected1 "Hello world!")
+ escape_string(result1 "${value1}")
+ assert_equals("${expected1}" "${result1}")
+
+ #Ensure escape sequences are escaped
+ set(value2 "\n\r\t")
+ set(expected2 "\\n\\r\\t")
+ escape_string(result2 "${value2}")
+ assert_equals("${expected2}" "${result2}")
+
+ #Ensure special characters are escaped
+ set(value3 "\\\"")
+ set(expected3 "\\\\\\\"")
+ escape_string(result3 "${value3}")
+ assert_equals("${expected3}" "${result3}")
+
+ #Ensure escaping of all targets works together
+ set(value4 "\"Hello\r\n\t\\world!\"")
+ set(expected4 "\\\"Hello\\r\\n\\t\\\\world!\\\"")
+ escape_string(result4 "${value4}")
+ assert_equals("${expected4}" "${result4}")
+
+ #Ensure no arguments yields an empty string
+ set(expected5 "")
+ escape_string(result5)
+ assert_equals("${expected5}" "${result5}")
+endfunction()
+define_test(
+ escape_string_escapes_the_expected_characters_and_yields_the_expected_result
+)
+
 ##`get_project_prefix` tests
 function(get_project_prefix_outside_project_scope_yields_expected_value)
  unset(CMAKE_PROJECT_NAME)

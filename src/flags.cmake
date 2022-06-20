@@ -17,38 +17,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/util.cmake)
  scope and places it in a destination variable
 ]]
 function(get_project_flags_variable gpfv_DESTINATION_VARIABLE)
- ##Validate destination variable name
- #is_empty(gpfv_DESTINATION_VARIABLE_EMPTY "${gpfv_DESTINATION_VARIABLE}")
- #if(gpfv_DESTINATION_VARIABLE_EMPTY)
- # message(
- #  FATAL_ERROR
- #  "get_project_flags_variable: Destination variable name cannot be empty!"
- # )
- #endif()
- #unset(gpfv_DESTINATION_VARIABLE_EMPTY)
-
- ##Emit warning if build flags are being added in a non-project scope
- #if(NOT DEFINED CMAKE_PROJECT_NAME)
- # #Use `NO_PROJECT` if not in project scope
- # set(gpfv_PROJECT_NAME "NO_PROJECT")
-
- # #Do not spam with warnings for every invocation, just on first
- # set(gpfv_DIAGNOSTIC_VARIABLE "${gpfv_PROJECT_NAME}_DIAGNOSTIC")
- # if(NOT DEFINED "${gpfv_DIAGNOSTIC_VARIABLE}")
- #  message(
- #   WARNING
- #   "get_project_flags_variable: Not in a `project()` scope, using 'NO_PROJECT'"
- #  )
- #  set("${gpfv_DIAGNOSTIC_VARIABLE}" "" CACHE INTERNAL "")
- # endif()
- # unset(gpfv_DIAGNOSTIC_VARIABLE)
- #else()
- # #Use `${CMAKE_PROJECT_NAME}` if in `project()` scope
- # set(gpfv_PROJECT_NAME "${CMAKE_PROJECT_NAME}")
- #endif()
-
- ##Set up project build flag list variable name
- #string(TOUPPER "${gpfv_PROJECT_NAME}" "${gpfv_DESTINATION_VARIABLE}")
  #Get project prefix
  get_project_prefix("${gpfv_DESTINATION_VARIABLE}")
 
@@ -275,16 +243,6 @@ function(add_fixed_build_flag afbf_FLAG)
  unset(afbf_FLAG_CONFIGURABLE_VARIABLE)
 endfunction()
 
-#add_build_flag(TEST_FLAG VALUE 1 2 3 4 5 6 7 DESCRIPTION "abc1234")
-#add_build_flag(TEST_FLAG2 VALUE FALSE CACHE BOOL DESCRIPTION "109832lkwjhe")
-#
-#foreach(FLAG ${NO_PROJECT})
-# message(
-#  STATUS
-#  "${FLAG} (${${FLAG}_DESCRIPTION}): ${${FLAG}}"
-# )
-#endforeach()
-
 #Check whether a build flag is configurable. Places result in desination
 #variable.
 function(is_build_flag_configurable ibfc_FLAG ibfc_DESTINATION_VARIABLE)
@@ -344,11 +302,11 @@ function(get_build_flag_list gbfl_DESTINATION_VARIABLE)
  get_project_flags_variable(gbfl_BUILD_FLAGS_LIST_VAR)
 
  #Validate destination variable name
- is_empty(gbfl_DESTINATION_VARIABLE "${gbfl_DESTINATION_VARIABLE}")
+ is_empty(gbfl_DESTINATION_VARIABLE_EMPTY "${gbfl_DESTINATION_VARIABLE}")
  if(gbfl_DESTINATION_VARIABLE_EMPTY)
   message(
    FATAL_ERROR
-   "get_build_flags_list: Destination variable name cannot be empty!"
+   "get_build_flag_list: Destination variable name cannot be empty!"
   )
  endif()
  unset(gbfl_DESTINATION_VARIABLE_EMPTY)
@@ -379,7 +337,7 @@ function(get_build_flag gbf_FLAG gbf_DESTINATION_VARIABLE)
 
  #Validate destination variable name
  is_empty(gbf_DESTINATION_VARIABLE_EMPTY "${gbf_DESTINATION_VARIABLE}")
- if(gbf_DESTINATION_VARIABLE_LENGTH_EMPTY)
+ if(gbf_DESTINATION_VARIABLE_EMPTY)
   message(
    FATAL_ERROR
    "get_build_flag: Destination variable name cannot be empty!"
@@ -411,11 +369,6 @@ function(get_build_flag_description gbfd_FLAG gbfd_DESTINATION_VAR)
  unset(gbfd_FLAG_DESCRIPTION_VARIABLE)
 endfunction()
 
-#get_build_flag_description(TEST_FLAG TEST_FLAG_DESC)
-#message("TEST_FLAG DESCRIPTION: ${TEST_FLAG_DESC}")
-#
-#add_build_flag(some_ridiculously_long_flag_name)
-
 #Assembles a pretty string for the build arguments and place it in a result
 #variable
 function(get_build_flags_pretty gbfp_DESTINATION_VARIABLE)
@@ -432,91 +385,59 @@ function(get_build_flags_pretty gbfp_DESTINATION_VARIABLE)
  endif()
  unset(gbfp_DESTINATION_VARIABLE_EMPTY)
 
- #Determine maximum flag length, to align spacing
+ #Set up flag pretty identifiers
  set(gbfp_MAX_FLAG_LENGTH 0)
- set(gbfp_INCONFIGURABLE_FLAGS FALSE)
  foreach(FLAG ${${gbfp_BUILD_FLAGS_LIST_VAR}})
-  #[[
-   Find maximum flag name length
-   Note: If flag is maximum length AND is unconfigurable, account for
-   additional length of `[]` characters.
-  ]]
-  string(LENGTH "${FLAG}" gbfp_FLAG_LENGTH)
-  if(gbfp_FLAG_LENGTH GREATER gbfp_MAX_FLAG_LENGTH)
-   #Update maximum length
-   set(gbfp_MAX_FLAG_LENGTH ${gbfp_FLAG_LENGTH})
-
-   #Check whether flag is configurable
-   is_build_flag_configurable("${FLAG}" gbfp_FLAG_CONFIGURABLE)
-   if(NOT gbfp_FLAG_CONFIGURABLE)
-    #Account for extra space if this is the maximum length AND unconfigurable
-    set(gbfp_INCONFIGURABLE_FLAGS TRUE)
-   else()
-    #Reset condition to account for extra space if new maximum length found AND
-    #flag is configurable
-    set(gbfp_INCONFIGURABLE_FLAGS FALSE)
-   endif()
-   unset(gbfp_FLAG_CONFIGURABLE)
+  #Determine pretty flag string
+  is_build_flag_configurable("${FLAG}" gbfp_FLAG_CONFIGURABLE)
+  if(gbfp_FLAG_CONFIGURABLE)
+   set("gbfp_${FLAG}_PRETTY_NAME" "${FLAG}")
+  else()
+   set("gbfp_${FLAG}_PRETTY_NAME" "[${FLAG}]")
   endif()
+  unset(gbfp_FLAG_CONFIGURABLE)
+
+  #Find maximum pretty flag name length
+  string(LENGTH "${gbfp_${FLAG}_PRETTY_NAME}" gbfp_FLAG_LENGTH)
+  if(gbfp_FLAG_LENGTH GREATER gbfp_MAX_FLAG_LENGTH)
+   set(gbfp_MAX_FLAG_LENGTH ${gbfp_FLAG_LENGTH})
+  endif()
+  unset(gbfp_FLAG_LENGTH)
  endforeach()
- unset(gbfp_FLAG_LENGTH)
 
- #Account for unconfigurable flag extra `[]` characters
- if(gbfp_INCONFIGURABLE_FLAGS)
-  math(EXPR gbfp_MAX_FLAG_LENGTH "${gbfp_MAX_FLAG_LENGTH} + 2")
- endif()
- unset(gbfp_INCONFIGURABLE_FLAGS)
-
- #Assemble pretty string
+ #Substitute in spacing and append lines to result string
  string(APPEND gbfp_PRETTY_FLAGS "Build configuration:")
  foreach(FLAG ${${gbfp_BUILD_FLAGS_LIST_VAR}})
-  #Check whether build flag is configurable
-  is_build_flag_configurable("${FLAG}" gbfp_FLAG_CONFIGURABLE)
-  if(NOT gbfp_FLAG_CONFIGURABLE)
-   set(gbfp_PREFIX "[")
-   set(gbfp_SUFFIX "]")
-  endif()
-  set(gbfp_FLAG_STR "${gbfp_PREFIX}${FLAG}${gbfp_SUFFIX}")
-  unset(gbfp_FLAG_CONFIGURABLE)
-  unset(gbfp_PREFIX)
-  unset(gbfp_SUFFIX)
-
   #Create flag and value stub string
-  set(gbfp_PRETTY_FLAG_LINE "\n - ${gbfp_FLAG_STR}:__SPACING__${${FLAG}}")
-
-  #Replace `__SPACING__` with correct number of spaces
-  string(LENGTH "${gbfp_FLAG_STR}" gbfp_FLAG_LENGTH)
-  math(
-   EXPR gbfp_FLAG_SPACING
-   "1 + (${gbfp_MAX_FLAG_LENGTH} - ${gbfp_FLAG_LENGTH})"
+  set(
+   gbfp_PRETTY_FLAG_LINE
+   "\n - ${gbfp_${FLAG}_PRETTY_NAME}:__SPACING__${${FLAG}}"
   )
-  string(REPEAT " " ${gbfp_FLAG_SPACING} gbfp_SPACING)
+
+  #Replace `__SPACING__` with correct spacing
+  string(LENGTH "${gbfp_${FLAG}_PRETTY_NAME}" gbfp_FLAG_PRETTY_NAME_LENGTH)
+  math(
+   EXPR gbfp_PRETTY_FLAG_LINE_SPACING
+   "1 + (${gbfp_MAX_FLAG_LENGTH} - ${gbfp_FLAG_PRETTY_NAME_LENGTH})"
+  )
+  unset(gbfp_FLAG_PRETTY_NAME_LENGTH)
+  string(REPEAT " " ${gbfp_PRETTY_FLAG_LINE_SPACING} gbfp_SPACING)
   string(
    REPLACE "__SPACING__" "${gbfp_SPACING}"
    gbfp_PRETTY_FLAG_LINE
    "${gbfp_PRETTY_FLAG_LINE}"
   )
+  unset(gbfp_SPACING)
 
-  #Append pretty flag string
+  #Append pretty flag line to result string
   string(APPEND gbfp_PRETTY_FLAGS "${gbfp_PRETTY_FLAG_LINE}")
+
+  unset(gbfp_PRETTY_FLAG_LINE)
+  unset("gbfp_${FLAG}_PRETTY_NAME")
  endforeach()
  unset(gbfp_MAX_FLAG_LENGTH)
- unset(gbfp_PRETTY_FLAG_LINE)
- unset(gbfp_FLAG_LENGTH)
- unset(gbfp_FLAG_SPACING)
- unset(gbfp_SPACING)
- unset(gbfp_PRETTY_FLAG_LINE)
 
  #Set pretty string on destination variable name in parent scope
  set("${gbfp_DESTINATION_VARIABLE}" "${gbfp_PRETTY_FLAGS}" PARENT_SCOPE)
  unset(gbfp_PRETTY_FLAGS)
 endfunction()
-
-#add_fixed_build_flag(some_fixed_build_flag VALUE 1234566)
-#add_build_flag(LAST_FLAG)
-#
-#get_project_flags_variable(abcdefghij)
-#message("${abcdefghij}: ${${abcdefghij}}")
-#
-#get_build_flags_pretty(ABCDEFG)
-#message("${ABCDEFG}")
