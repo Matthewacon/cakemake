@@ -310,7 +310,7 @@ function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
  unset(ics_COMPILER_SUPPORTED)
 endfunction()
 
-#TODO Adds a compiler-specific formatter for defines and source flags
+#Adds a compiler-specific formatter for defines and source flags
 assert_name_unique(
  add_compiler_define_formatter
  COMMAND
@@ -318,8 +318,85 @@ assert_name_unique(
  "elsewhere!"
 )
 function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
- #TODO Validate compiler name
+ #Compiler details prefix
+ get_project_compiler_details_prefix(acdf_COMPILER_DETAILS_PREFIX)
 
+ #Help message
+ string(
+  APPEND acdf_HELP_MESSAGE
+  "'add_compiler_define_formatter' takes the following arguments:"
+  "\n - (REQUIRED) <COMPILER>: The name of the compiler to specify a define "
+  "formatter for"
+  "\n - (REQUIRED) <FORMATTER_FUNCTION>: The name of the formatter function. "
+  "The function prototype should be "
+  "`function(my_formatter ARG VALUE DESTINATION_VARIABLE)`"
+  "\n\nExample:"
+  "\n function(some_compiler_formatter ARG VALUE DEST)"
+  "\n  set(\"\${DEST}\" \"-D\${ARG}=\${VALUE}\" PARENT_SCOPE)"
+  "\n endfunction()"
+  "\n"
+  "\n add_compiler_define_formatter(some_compiler some_compiler_formatter)"
+ )
+
+ #Validate compiler name
+ is_empty(acdf_COMPILER_EMPTY "${acdf_COMPILER}")
+ if(acdf_COMPILER_EMPTY)
+  message("${acdf_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <COMPILER> argument cannot be empty!")
+ endif()
+ unset(acdf_COMPILER_EMPTY)
+
+ #Validate formatter function name
+ is_empty(acdf_FORMATTER_FUNCTION_EMPTY "${acdf_FORMATTER_FUNCTION}")
+ if(acdf_FORMATTER_FUNCTION_EMPTY)
+  message("${acdf_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <FORMATTER_FUNCTION> argument cannot be empty!")
+ endif()
+ unset(acdf_FORMATTER_FUNCTION_EMPTY)
+
+ if(NOT COMMAND "${acdf_FORMATTER_FUNCTION}")
+  message("${acdf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The formatter function '${acdf_FORMATTER_FUNCTION}' is not defined!"
+  )
+ endif()
+
+ #Ensure define formatter does not already exist
+ set(
+  acdf_DEFINE_FORMATTER_LIST_VAR
+  "${acdf_COMPILER_DETAILS_PREFIX}_FORMATTERS"
+ )
+ set(
+  acdf_DEFINE_FORMATTER_NAME_VAR
+  "${acdf_COMPILER_DETAILS_PREFIX}_${acdf_COMPILER}_FORMATTER"
+ )
+
+ if("${acdf_COMPILER}" IN_LIST "${acdf_DEFINE_FORMATTER_LIST_VAR}")
+  message("${acdf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The compiler '${acdf_COMPILER}' already has a define formatter specified! "
+   "(formatter: '${${acdf_DEFINE_FORMATTER_NAME_VAR}}')"
+  )
+ endif()
+
+ #Add compiler define formatter
+ list(
+  APPEND ${acdf_DEFINE_FORMATTER_LIST_VAR}
+  "${acdf_COMPILER}"
+ )
+ set(
+  "${acdf_DEFINE_FORMATTER_LIST_VAR}"
+  "${${acdf_DEFINE_FORMATTER_LIST_VAR}}"
+  PARENT_SCOPE
+ )
+
+ set(
+  "${acdf_DEFINE_FORMATTER_NAME_VAR}"
+  "${acdf_FORMATTER_FUNCTION}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #[[

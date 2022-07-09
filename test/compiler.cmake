@@ -104,7 +104,7 @@ define_test(
  define_compiler_succeeds_when_detecting_unsupported_compiler_with_allow_unsupported
 )
 
-##TODO `get_supported_compilers` tests
+##`get_supported_compilers` tests
 function(get_supported_compilers_yields_empty_string_when_detect_compiler_is_not_invoked)
  get_supported_compilers(supported_compilers)
 
@@ -169,6 +169,71 @@ endfunction()
 define_test(is_compiler_supported_yields_true_for_supported_compilers)
 
 ##TODO `add_compiler_define_formatter` tests
+function(add_compiler_define_formatter_with_empty_compiler_name_raises_erorr)
+ add_compiler_define_formatter("" "")
+endfunction()
+define_test(
+ add_compiler_define_formatter_with_empty_compiler_name_raises_erorr
+ REGEX "The <COMPILER> argument cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ add_compiler_define_formatter_with_empty_formatter_function_name_raises_error
+)
+ add_compiler_define_formatter("some_compiler" "")
+endfunction()
+define_test(
+ add_compiler_define_formatter_with_empty_formatter_function_name_raises_error
+ REGEX "The <FORMATTER_FUNCTION> argument cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ add_compiler_define_formatter_with_non_existent_formatter_function_raises_error
+)
+ add_compiler_define_formatter("some_compiler" "some_compiler_formatter")
+endfunction()
+define_test(
+ add_compiler_define_formatter_with_non_existent_formatter_function_raises_error
+ REGEX "The formatter function 'some_compiler_formatter' is not defined!"
+ EXPECT_FAIL
+)
+
+function(
+ add_compiler_define_formatter_invoked_for_existing_formatter_raises_error
+)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(prefix)
+
+ set("${prefix}_FORMATTERS" "some_compiler")
+ function(some_compiler_formatter)
+ endfunction()
+
+ add_compiler_define_formatter("some_compiler" "some_compiler_formatter")
+endfunction()
+define_test(
+ add_compiler_define_formatter_invoked_for_existing_formatter_raises_error
+ REGEX "The compiler 'some_compiler' already has a define formatter "
+  "specified! (formatter: 'some_compiler_formatter')"
+)
+
+function(add_compiler_define_formatter_sets_the_expected_variables)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(prefix)
+
+ set(compiler_formatter_list_var "${prefix}_FORMATTERS")
+ set(compiler_formatter_name_var "${prefix}_some_compiler_2_FORMATTER")
+
+ function(some_compiler_2_formatter ARG VALUE DEST)
+ endfunction()
+ add_compiler_define_formatter(some_compiler_2 some_compiler_2_formatter)
+
+ assert_equals("some_compiler_2" "${${compiler_formatter_list_var}}")
+ assert_equals("some_compiler_2_formatter" "${${compiler_formatter_name_var}}")
+endfunction()
+define_test(add_compiler_define_formatter_sets_the_expected_variables)
+
 ##TODO `get_compiler_define_formatter` tests
 ##TODO `remove_compiler_define_formatter` tests
 ##TODO `add_cc_define` tests
