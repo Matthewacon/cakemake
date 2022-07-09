@@ -39,7 +39,7 @@ function(is_name_unique inu_NAME inu_CONDITION inu_DESTINATION_VARIABLE)
   message("${inu_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "is_name_unique: The '<NAME>' argument must not be empty!"
+   "is_name_unique: The <NAME> argument must not be empty!"
   )
  endif()
  unset(inu_NAME_LENGTH)
@@ -58,7 +58,7 @@ function(is_name_unique inu_NAME inu_CONDITION inu_DESTINATION_VARIABLE)
   message("${inu_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "is_name_unique: The '<DESTINATION_VARIABLE>' argument must not be empty!"
+   "is_name_unique: The <DESTINATION_VARIABLE> argument must not be empty!"
   )
  endif()
  unset(inu_DESTINATION_VARIABLE_LENGTH)
@@ -341,7 +341,7 @@ function(generate_unique_name gun_NAME gun_CONDITION gun_DESTINATION_VARIABLE)
    message("${gun_HELP_MESSAGE}")
    message(
     FATAL_ERROR
-    "generate_unique_name: The <LENGTH> argument cannot have a value "
+    "generate_unique_name: The 'LENGTH' argument cannot have a value "
     "less than 1!"
    )
   endif()
