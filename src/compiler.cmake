@@ -139,6 +139,14 @@ function(detect_compiler dc_DESTINATION_VARIABLE)
   endif()
  endforeach()
 
+ #[[
+  Set the destination variable in the parent scope if `ALLOW_UNSUPPORTED` is
+  specified
+ ]]
+ if(dc_ALLOW_UNSUPPORTED)
+  set("${dc_DESTINATION_VARIABLE}" "${${dc_COMPILER_ID}}" PARENT_SCOPE)
+ endif()
+
  #Store supported compiler list, flags and other information
  set(
   "${dc_COMPILER_DETAILS_PREFIX}_ALLOW_UNSUPPORTED" "${dc_ALLOW_UNSUPPORTED}"

@@ -89,7 +89,7 @@ function(
  set(my_compiler_id_variable "some_unsupported_compiler")
 
  detect_compiler(
-  detect_compiler
+  detected_compiler 
   COMPILER_ID my_compiler_id_variable
   SUPPORTED_COMPILERS a b c
   ALLOW_UNSUPPORTED
