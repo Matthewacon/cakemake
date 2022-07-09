@@ -89,7 +89,7 @@ function(
  set(my_compiler_id_variable "some_unsupported_compiler")
 
  detect_compiler(
-  detected_compiler 
+  detected_compiler
   COMPILER_ID my_compiler_id_variable
   SUPPORTED_COMPILERS a b c
   ALLOW_UNSUPPORTED
@@ -105,7 +105,69 @@ define_test(
 )
 
 ##TODO `get_supported_compilers` tests
-##TODO `is_compiler_supported` tests
+function(get_supported_compilers_yields_empty_string_when_detect_compiler_is_not_invoked)
+ get_supported_compilers(supported_compilers)
+
+ assert_equals("" "${supported_compilers}")
+endfunction()
+define_test(
+ get_supported_compilers_yields_empty_string_when_detect_compiler_is_not_invoked
+)
+
+function(get_supported_compilers_yields_expected_value_after_detect_compilers_invocation)
+ set(expected_supported_compilers "a b c")
+
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS ${expected_supported_compilers}
+  ALLOW_UNSUPPORTED
+ )
+
+ get_supported_compilers(supported_compilers)
+ assert_equals("${expected_supported_compilers}" "${supported_compilers}")
+endfunction()
+define_test(get_supported_compilers_yields_expected_value_after_detect_compilers_invocation)
+
+##`is_compiler_supported` tests
+function(is_compiler_supported_yields_false_for_unsupported_compilers)
+ is_compiler_supported(value1 "unsupported_compiler")
+ assert_false(value1)
+
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS a b c
+  ALLOW_UNSUPPORTED
+ )
+
+ is_compiler_supported(value2 "unsupported_compiler")
+ assert_false(value2)
+endfunction()
+define_test(is_compiler_supported_yields_false_for_unsupported_compilers)
+
+function(is_compiler_supported_yields_true_for_supported_compilers)
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS a b c
+  ALLOW_UNSUPPORTED
+ )
+
+ is_compiler_supported(value1 a)
+ assert_true(value1)
+
+ is_compiler_supported(value2 b)
+ assert_true(value2)
+
+ is_compiler_supported(value3 c)
+ assert_true(value3)
+endfunction()
+define_test(is_compiler_supported_yields_true_for_supported_compilers)
+
 ##TODO `add_compiler_define_formatter` tests
 ##TODO `get_compiler_define_formatter` tests
 ##TODO `remove_compiler_define_formatter` tests

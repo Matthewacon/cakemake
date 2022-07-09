@@ -247,48 +247,34 @@ assert_name_unique(
  "Name collision: Function 'is_compiler_supported' is already defined "
  "elsewhere!"
 )
-function(is_compiler_supported ics_COMPILER ics_DESTINATION_VARIABLE)
+function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
  #Get compiler details prefix
  get_project_compiler_details_prefix(ics_COMPILER_DETAILS_PREFIX)
 
- #Help message utility function
- function(ics_print_help ics_ph_LEVEL)
-  #Print help
-  message(
-   "'is_compiler_supported' takes the following arguments:"
-   "\n - (REQUIRED) <COMPILER_ID>: The name of the compiler to check"
-   "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
-   "variable, to place the result in"
-   "\n\nExample:"
-   "\n detect_compiler("
-   "\n  MY_DETECTED_COMPILER_ID_RESULT"
-   "\n  COMPILER_ID CMAKE_C_COMPILER_ID"
-   "\n  SUPPORTED_COMPILERS GNU MSVC"
-   "\n )"
-   "\n is_compiler_supported(GNU GNU_SUPPORTED)"
-   "\n message(\${GNU_SUPPORTED}) #prints 'TRUE'"
-   "\n is_compiler_supported(Clang Clang_SUPPORTED)"
-   "\n message(\${Clang_SUPPORTED}) #prints 'FALSE'"
-  )
-
-  #Print diagnostic
-  list(LENGTH ARGN ics_ph_DYNAMIC_ARGUMENT_LENGTH)
-  if(ics_ph_DYNAMIC_ARGUMENT_LENGTH GREATER 0)
-   message(${ics_ph_LEVEL} ${ARGN})
-  else()
-   message(
-    ${ics_ph_LEVEL}
-    "Illegal arguments supplied to 'is_compiler_supported!'"
-   )
-  endif()
-  unset(ics_ph_DYNAMIC_ARGUMENT_LENGTH)
- endfunction()
-
+ #Help message
+ string(
+  APPEND ics_HELP_MESSAGE
+  "'is_compiler_supported' takes the following arguments:"
+  "\n - (REQUIRED) <COMPILER_ID>: The name of the compiler to check"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable, to place the result in"
+  "\n\nExample:"
+  "\n detect_compiler("
+  "\n  MY_DETECTED_COMPILER_ID_RESULT"
+  "\n  COMPILER_ID CMAKE_C_COMPILER_ID"
+  "\n  SUPPORTED_COMPILERS GNU MSVC"
+  "\n )"
+  "\n is_compiler_supported(GNU GNU_SUPPORTED)"
+  "\n message(\${GNU_SUPPORTED}) #prints 'TRUE'"
+  "\n is_compiler_supported(Clang Clang_SUPPORTED)"
+  "\n message(\${Clang_SUPPORTED}) #prints 'FALSE'"
+ )
 
  #Validate compiler name
  is_empty(ics_COMPILER_EMPTY "${ics_COMPILER}")
  if(ics_COMPILER_EMPTY)
-  ics_print_help(
+  message("${ics_HELP_MESSAGE}")
+  message(
    FATAL_ERROR
    "is_compiler_supported: The 'COMPILER' argument cannot be empty!"
   )
@@ -298,7 +284,8 @@ function(is_compiler_supported ics_COMPILER ics_DESTINATION_VARIABLE)
  #Validate destination variable name
  is_empty(ics_DESTINATION_VARIABLE_EMPTY "${ics_DESTINATION_VARIABLE}")
  if(ics_DESTINATION_VARIABLE_EMPTY)
-  ics_print_help(
+  message("${ics_HELP_MESSAGE}")
+  message(
    FATAL_ERROR
    "is_compiler_supported: The 'DESTINATION_VARIABLE' argument cannot be "
    "empty!"
