@@ -84,7 +84,7 @@ function(detect_compiler dc_DESTINATION_VARIABLE)
   message("${dc_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "detect_compiler: The <DESTINATION_VARIABLE> argument cannot be empty!"
+   "detect_compiler: The <DESTINATION_VARIABLE> argument must not be empty!"
   )
  endif()
  unset(dc_DESTINATION_VARIABLE_EMPTY)
@@ -226,7 +226,7 @@ function(get_supported_compilers gsc_DESTINATION_VARIABLE)
   message("${gsc_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "get_supported_compilers: The <DESTINATION_VARIABLE> argument cannot be "
+   "get_supported_compilers: The <DESTINATION_VARIABLE> argument must not be "
    "empty!"
   )
  endif()
@@ -276,7 +276,7 @@ function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
   message("${ics_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "is_compiler_supported: The 'COMPILER' argument cannot be empty!"
+   "is_compiler_supported: The 'COMPILER' argument must not be empty!"
   )
  endif()
  unset(ics_COMPILER_EMPTY)
@@ -287,7 +287,7 @@ function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
   message("${ics_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "is_compiler_supported: The 'DESTINATION_VARIABLE' argument cannot be "
+   "is_compiler_supported: The 'DESTINATION_VARIABLE' argument must not be "
    "empty!"
   )
  endif()
@@ -342,7 +342,7 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
  is_empty(acdf_COMPILER_EMPTY "${acdf_COMPILER}")
  if(acdf_COMPILER_EMPTY)
   message("${acdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <COMPILER> argument cannot be empty!")
+  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
  endif()
  unset(acdf_COMPILER_EMPTY)
 
@@ -350,7 +350,7 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
  is_empty(acdf_FORMATTER_FUNCTION_EMPTY "${acdf_FORMATTER_FUNCTION}")
  if(acdf_FORMATTER_FUNCTION_EMPTY)
   message("${acdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <FORMATTER_FUNCTION> argument cannot be empty!")
+  message(FATAL_ERROR "The <FORMATTER_FUNCTION> argument must not be empty!")
  endif()
  unset(acdf_FORMATTER_FUNCTION_EMPTY)
 
@@ -402,8 +402,8 @@ endfunction()
 #TODO Add formatters for default set of supported compilers
 
 #[[
- TODO Gets the name of the compiler-specific define formatter function and
- places it in the destination variable
+ Gets the name of the compiler-specific define formatter function and places it
+ in the destination variable
 ]]
 assert_name_unique(
  get_compiler_define_formatter
@@ -432,7 +432,7 @@ function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
  is_empty(gcdf_COMPILER_EMPTY "${gcdf_COMPILER}")
  if(gcdf_COMPILER_EMPTY)
   message("${gcdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <COMPILER> argument cannot be empty!")
+  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
  endif()
  unset(gcdf_COMPILER_EMPTY)
 
@@ -440,7 +440,7 @@ function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
  is_empty(gcdf_DESTINATION_VARIABLE_EMPTY "${gcdf_DESTINATION_VARIABLE}")
  if(gcdf_DESTINATION_VARIABLE_EMPTY)
   message("${gcdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument cannot be empty!")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
  endif()
  unset(gcdf_DESTINATION_VARIABLE_EMPTY)
 
@@ -462,7 +462,38 @@ assert_name_unique(
  "Name collision: Function 'remove_compiler_define_formatter' is already "
  "defined elsewhere!"
 )
-function(remove_compiler_define_formatter fcdf_COMPILER)
+function(remove_compiler_define_formatter rcdf_COMPILER)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(rcdf_COMPILER_DETAILS_PREFIX)
+
+ string(
+  APPEND rcdf_HELP_MESSAGE
+  "'remoce_compiler_define_formatter' takes the following arguments:"
+  "\n - (REQUIRED) <COMPILER>: The name of the compiler to remove the define "
+  "formatter for"
+  "\n\nExample:"
+  "\n remove_compiler_define_formatter(some_compiler)"
+  "\n get_compiler_define_formatter(some_compiler the_formatter_name)"
+  "\n message(\"\${the_formatter_name}\") #prints nothing"
+ )
+
+ #Validate compiler name
+ is_empty(rcdf_COMPILER_EMPTY "${rcdf_COMPILER}")
+ if(rcdf_COMPILER_EMPTY)
+  message("${rcdf_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+ endif()
+ unset(rcdf_COMPILER_EMPTY)
+
+ set(rcdf_FORMATTER_LIST_VAR "${prefix}_FORMATTERS")
+ set(rcdf_FORMATTER_NAME_VAR "${prefix}_${rcdf_COMPILER}_FORMATTER")
+
+ #Remove compiler from list of compilers with associated formatters
+ list(REMOVE_ITEM "${rcdf_FORMATTER_LIST_VAR}" "${rcdf_COMPILER}")
+ set("${rcdf_FORMATTER_LIST_VAR}" "${${rcdf_FORMATTER_LIST_VAR}}" PARENT_SCOPE)
+
+ #Remove associated compiler formatter
+ unset("${rcdf_FORMATTER_NAME_VAR}" PARENT_SCOPE)
 endfunction()
 
 #TODO Add compiler-specific source define for c-preprocessor

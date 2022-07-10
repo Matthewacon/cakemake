@@ -174,7 +174,7 @@ function(add_compiler_define_formatter_with_empty_compiler_name_raises_erorr)
 endfunction()
 define_test(
  add_compiler_define_formatter_with_empty_compiler_name_raises_erorr
- REGEX "The <COMPILER> argument cannot be empty!"
+ REGEX "The <COMPILER> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -185,7 +185,7 @@ function(
 endfunction()
 define_test(
  add_compiler_define_formatter_with_empty_formatter_function_name_raises_error
- REGEX "The <FORMATTER_FUNCTION> argument cannot be empty!"
+ REGEX "The <FORMATTER_FUNCTION> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -240,7 +240,7 @@ function(get_compiler_define_formatter_with_empty_compiler_name_raises_error)
 endfunction()
 define_test(
  get_compiler_define_formatter_with_empty_compiler_name_raises_error
- REGEX "The <COMPILER> argument cannot be empty!"
+ REGEX "The <COMPILER> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -251,7 +251,7 @@ function(
 endfunction()
 define_test(
  get_compiler_define_formatter_with_empty_destination_variable_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument cannot be empty!"
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -285,6 +285,35 @@ define_test(
 get_compiler_define_formatter_yields_expected_value_for_existing_formatter
 )
 
-##TODO `remove_compiler_define_formatter` tests
+##`remove_compiler_define_formatter` tests
+function(
+ remove_compiler_define_formatter_with_empty_compiler_name_raises_error
+)
+ remove_compiler_define_formatter("")
+endfunction()
+define_test(
+ remove_compiler_define_formatter_with_empty_compiler_name_raises_error
+ REGEX "The <COMPILER> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(remove_compiler_define_formatter_removes_expected_values)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(prefix)
+
+ set(formatter_list_var "${prefix}_FORMATTERS")
+ set(formatter_name_var "${prefix}_some_compiler_FORMATTER")
+
+ #Set up dummy values
+ set("${formatter_list_var}" "some_compiler")
+ set("${formatter_name_var}" "some_compiler_formatter")
+
+ remove_compiler_define_formatter(some_compiler)
+ assert_equals("" "${${formatter_list_var}}")
+ is_name_unique("${formatter_name_var}" VARIABLE association_is_deleted)
+ assert_true(association_is_deleted)
+endfunction()
+define_test(remove_compiler_define_formatter_removes_expected_values)
+
 ##TODO `add_cc_define` tests
 ##TODO `add_cc_or_ld_argument` tests
