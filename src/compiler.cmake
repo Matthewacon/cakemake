@@ -399,6 +399,8 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
  )
 endfunction()
 
+#TODO Add formatters for default set of supported compilers
+
 #[[
  TODO Gets the name of the compiler-specific define formatter function and
  places it in the destination variable
@@ -409,7 +411,45 @@ assert_name_unique(
  "Name collision: Function 'get_compiler_define_formatter' is already defined "
  "elsewhere!"
 )
-function(get_compiler_define_formatter gcdf_COMPILER)
+function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcdf_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND gcdf_HELP_MESSAGE
+  "'get_compiler_define_formatter' takes the following arguments:"
+  "\n - (REQUIRED) <COMPILER>: The name of the compiler"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the variable to place "
+  "the compiler define formatter function name in, in the parent scope"
+  "\n\nExample:"
+  "\n add_compiler_define_formatter(some_compiler some_compiler_formatter)"
+  "\n get_compiler_define_formatter(some_compiler the_formatter_name)"
+  "\n message(\"\${the_formatter_name}\") #prints 'some_compiler_formatter'"
+ )
+
+ #Validate compiler name
+ is_empty(gcdf_COMPILER_EMPTY "${gcdf_COMPILER}")
+ if(gcdf_COMPILER_EMPTY)
+  message("${gcdf_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <COMPILER> argument cannot be empty!")
+ endif()
+ unset(gcdf_COMPILER_EMPTY)
+
+ #Validate destination variable name
+ is_empty(gcdf_DESTINATION_VARIABLE_EMPTY "${gcdf_DESTINATION_VARIABLE}")
+ if(gcdf_DESTINATION_VARIABLE_EMPTY)
+  message("${gcdf_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument cannot be empty!")
+ endif()
+ unset(gcdf_DESTINATION_VARIABLE_EMPTY)
+
+ set(gcdf_DEFINE_FORMATTER_NAME_VAR "${prefix}_${gcdf_COMPILER}_FORMATTER")
+ set(
+  "${gcdf_DESTINATION_VARIABLE}"
+  "${${gcdf_DEFINE_FORMATTER_NAME_VAR}}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #[[

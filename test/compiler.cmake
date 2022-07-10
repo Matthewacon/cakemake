@@ -168,7 +168,7 @@ function(is_compiler_supported_yields_true_for_supported_compilers)
 endfunction()
 define_test(is_compiler_supported_yields_true_for_supported_compilers)
 
-##TODO `add_compiler_define_formatter` tests
+##`add_compiler_define_formatter` tests
 function(add_compiler_define_formatter_with_empty_compiler_name_raises_erorr)
  add_compiler_define_formatter("" "")
 endfunction()
@@ -234,7 +234,57 @@ function(add_compiler_define_formatter_sets_the_expected_variables)
 endfunction()
 define_test(add_compiler_define_formatter_sets_the_expected_variables)
 
-##TODO `get_compiler_define_formatter` tests
+##`get_compiler_define_formatter` tests
+function(get_compiler_define_formatter_with_empty_compiler_name_raises_error)
+ get_compiler_define_formatter("" "")
+endfunction()
+define_test(
+ get_compiler_define_formatter_with_empty_compiler_name_raises_error
+ REGEX "The <COMPILER> argument cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ get_compiler_define_formatter_with_empty_destination_variable_raises_error
+)
+ get_compiler_define_formatter("some_compiler" "")
+endfunction()
+define_test(
+ get_compiler_define_formatter_with_empty_destination_variable_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument cannot be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ get_compiler_define_formatter_yields_empty_string_for_nonexistent_formatters
+)
+ get_compiler_define_formatter(some_compiler the_formatter_name)
+ assert_equals("" "${the_formatter_name}")
+endfunction()
+define_test(
+ get_compiler_define_formatter_yields_empty_string_for_nonexistent_formatters
+)
+
+function(
+ get_compiler_define_formatter_yields_expected_value_for_existing_formatter
+)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(prefix)
+
+ set(formatter_list_var "${prefix}_FORMATTERS")
+ set(formatter_name_var "${prefix}_some_compiler_FORMATTER")
+
+ #Set up dummy data
+ set("${formatter_list_var}" "some_compiler")
+ set("${formatter_name_var}" "some_compiler_formatter")
+
+ get_compiler_define_formatter(some_compiler the_formatter_name)
+ assert_equals("some_compiler_formatter" "${the_formatter_name}")
+endfunction()
+define_test(
+get_compiler_define_formatter_yields_expected_value_for_existing_formatter
+)
+
 ##TODO `remove_compiler_define_formatter` tests
 ##TODO `add_cc_define` tests
 ##TODO `add_cc_or_ld_argument` tests
