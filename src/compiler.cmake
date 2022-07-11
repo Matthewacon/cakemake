@@ -6,9 +6,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/util.cmake)
 
 #[[TODO:
  - Set up global cache variable for prefixing all definitions in this library
- - Add unique name assertions to all function declarations
- - Remove internal `print_help` variants in favour of manual `message`
-   invocations
  - Add help messages to all functions
 ]]
 
@@ -187,6 +184,63 @@ function(detect_compiler dc_DESTINATION_VARIABLE)
   unset(dc_DIAGNOSTIC_LEVEL)
  endif()
  unset(dc_SUPPORTED_COMPILER_DETECTED)
+endfunction()
+
+#[[
+ Retrieves the detected compiler ID and places it in the destination variable,
+ in the parent scope.
+
+ Note: Must invoke `detect_compiler` before attempting to retreive the detected
+ compiler ID.
+]]
+assert_name_unique(
+ get_detected_compiler
+ COMMAND
+ "Name collision: Function 'get_detected_compiler' is already defined "
+ "elsewhere!"
+)
+function(get_detected_compiler gdc_DESTINATION_VARIABLE)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gdc_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND gdc_HELP_MESSAGE
+  "'get_detected_compiler' takes the following arguments:"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the variable to place "
+  "the detected compiler ID in, in the parent scope"
+  "\n\nExample:"
+  "\n detect_compiler("
+  "\n  detected_compiler_id"
+  "\n  COMPILER_ID CMAKE_C_COMPILER_ID"
+  "\n  SUPPORTED_COMPILERS GNU"
+  "\n )"
+  "\n get_detected_compiler(retrieved_compiler_id)"
+  "\n #Prints \"GNU -- GNU\""
+  "\n message(\"\${detected_compiler_id} -- \${retrieved_compiler_id} \")"
+ )
+
+ #Validate destination variable name
+ is_empty(gdc_DESTINATION_VARIABLE_EMPTY "${gdc_DESTINATION_VARIABLE}")
+ if(gdc_DESTINATION_VARIABLE_EMPTY)
+  message("${gdc_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+ endif()
+ unset(gdc_DESTINATION_VARIABLE_EMPTY)
+
+ #Ensure `detect_compiler` was invoked before
+ set(gdc_COMPILER_ID_VAR "${gdc_COMPILER_DETAILS_PREFIX}_DETECTED_COMPILER_ID")
+ if(NOT DEFINED "${gdc_COMPILER_ID_VAR}")
+  message("${gdc_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The detected compiler ID is not set! You must call `detect_compiler` "
+   "before attempting to retrieve the detected compiler ID!"
+  )
+ endif()
+
+ #Set destination variable in parent scope
+ set("${gdc_DESTINATION_VARIABLE}" "${${gdc_COMPILER_ID_VAR}}" PARENT_SCOPE)
 endfunction()
 
 #[[
@@ -444,7 +498,10 @@ function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
  endif()
  unset(gcdf_DESTINATION_VARIABLE_EMPTY)
 
- set(gcdf_DEFINE_FORMATTER_NAME_VAR "${prefix}_${gcdf_COMPILER}_FORMATTER")
+ set(
+  gcdf_DEFINE_FORMATTER_NAME_VAR
+  "${gcdf_COMPILER_DETAILS_PREFIX}_${gcdf_COMPILER}_FORMATTER"
+ )
  set(
   "${gcdf_DESTINATION_VARIABLE}"
   "${${gcdf_DEFINE_FORMATTER_NAME_VAR}}"
@@ -453,8 +510,8 @@ function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
 endfunction()
 
 #[[
- TODO Removes the association between a compiler and its define formatter
- function. Useful for users that may want to override the default formatters.
+ Removes the association between a compiler and its define formatter function.
+ Useful for users that may want to override the default formatters.
 ]]
 assert_name_unique(
  remove_compiler_define_formatter
@@ -485,8 +542,11 @@ function(remove_compiler_define_formatter rcdf_COMPILER)
  endif()
  unset(rcdf_COMPILER_EMPTY)
 
- set(rcdf_FORMATTER_LIST_VAR "${prefix}_FORMATTERS")
- set(rcdf_FORMATTER_NAME_VAR "${prefix}_${rcdf_COMPILER}_FORMATTER")
+ set(rcdf_FORMATTER_LIST_VAR "${rcdf_COMPILER_DETAILS_PREFIX}_FORMATTERS")
+ set(
+  rcdf_FORMATTER_NAME_VAR
+  "${rcdf_COMPILER_DETAILS_PREFIX}_${rcdf_COMPILER}_FORMATTER"
+ )
 
  #Remove compiler from list of compilers with associated formatters
  list(REMOVE_ITEM "${rcdf_FORMATTER_LIST_VAR}" "${rcdf_COMPILER}")
@@ -496,13 +556,132 @@ function(remove_compiler_define_formatter rcdf_COMPILER)
  unset("${rcdf_FORMATTER_NAME_VAR}" PARENT_SCOPE)
 endfunction()
 
-#TODO Add compiler-specific source define for c-preprocessor
+#Add compiler-specific source define for c-preprocessor
 assert_name_unique(
  add_cc_define
  COMMAND
  "Name collision: Function 'add_cc_define' is already defined elsewhere!"
 )
-function(add_cc_define)
+function(add_cc_define acd_ARG acd_VALUE)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(acd_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND acd_HELP_MESSAGE
+  "'add_cc_define' takes the following arguments:"
+  "\n - (REQUIRED) <DEFINE_NAME>: The name of the cc define"
+  "\n - (REQUIRED) <VALUE>: The value of the cc define"
+  "\n\nExample:"
+  "\n detect_compiler("
+  "\n  unused"
+  "\n  COMPILER_ID CMAKE_C_CMPILER_ID"
+  "\n  SUPPORTED_COMPILERS Clang"
+  "\n )"
+  "\n add_cc_define(\"FIRST\" \"123\")"
+  "\n add_cc_define(\"SECOND\" \"456\")"
+  "\n "
+  "\n #Get the list of cc defines"
+  "\n get_cc_defines(cc_defines)"
+  "\n message(\"\${cc_defines}\") #Prints \"FIRST;SECOND\""
+  "\n "
+  "\n #Get the value for a given cc define"
+  "\n get_cc_define_value(FIRST FIRST_value)"
+  "\n message(\"\${FIRST_value}\") #Prints \"123\""
+  "\n "
+  "\n #Get the formatted string that will be passed to the compiler"
+  "\n get_formatted_cc_define(SECOND SECOND_formatted)"
+  "\n message(\"\${SECOND_formatted}\") #Prints '-DSECOND=456'"
+ )
+
+ #Validate cc define argument name
+ is_empty(acd_ARG_EMPTY "${acd_ARG}")
+ if(acd_ARG_EMPTY)
+  message("${acd_HELP_MESSAGE}")
+  message("The <DEFINE_NAME> argument must not be empty!")
+ endif()
+ unset(acd_ARG_EMPTY)
+
+ set(acd_DEFINE_LIST_VAR "${acd_COMPILER_DETAILS_PREFIX}_CC_DEFINES")
+ set(
+  acd_DEFINE_VALUE_VAR
+  "${acd_COMPILER_DETAILS_PREFIX}_CC_DEFINE_${acd_ARG}"
+ )
+ set(
+  acd_DEFINE_FORMATTED_VAR
+  "${acd_COMPILER_DETAILS_PREFIX}_CC_DEFINE_${acd_ARG}_FORMATTED"
+ )
+
+ #Format argument for the detected compiler
+ get_detected_compiler(acd_DETECTED_COMPILER_ID)
+ get_compiler_define_formatter(
+  "${acd_DETECTED_COMPILER_ID}"
+  acd_COMPILER_DEFINE_FORMATTER
+ )
+ is_empty(
+  acd_COMPILER_DEFINE_FORMATTER_EMPTY
+  "${acd_COMPILER_DEFINE_FORMATTER}"
+ )
+ if(acd_COMPILER_DEFINE_FORMATTER_EMPTY)
+  message("${acd_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "Missing formatter for compiler '${acd_DETECTED_COMPILER_ID}'! You must "
+   "specify a define formatter using `add_compiler_define_formatter()` for "
+   "the compiler '${acd_DETECTED_COMPILER_ID}'!"
+  )
+ endif()
+ unset(acd_COMPILER_DEFINE_FORMATTER_EMPTY)
+
+ cmake_language(
+  CALL "${acd_COMPILER_DEFINE_FORMATTER}"
+  "${acd_ARG}"
+  "${acd_VALUE}"
+  acd_FORMATTED_DEFINE
+ )
+ is_empty(acd_FORMATTED_DEFINE_EMPTY "${acd_FORMATTED_DEFINE}")
+ if(acd_FORMATTED_DEFINE_EMPTY)
+  message("${acd_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The define formatter for the compiler '${acd_DETECTED_COMPILER_ID}' did "
+   "not return a value! (function: '${acd_COMPILER_DEFINE_FORMATTER}')"
+  )
+ endif()
+ unset(acd_FORMATTED_DEFINE_EMPTY)
+
+ #Add arg to list of cc defines
+ list(
+  APPEND "${acd_DEFINE_LIST_VAR}"
+  "${acd_ARG}"
+ )
+ set("${acd_DEFINE_LIST_VAR}" "${${acd_DEFINE_LIST_VAR}}" PARENT_SCOPE)
+
+ #Associate value with cc define
+ set("${acd_DEFINE_VALUE_VAR}" "${acd_VALUE}" PARENT_SCOPE)
+
+ #Associate formatted argument with cc define
+ set("${acd_DEFINE_FORMATTED_VAR}" "${acd_FORMATTED_DEFINE}" PARENT_SCOPE)
+endfunction()
+
+#[[
+ TODO Retrieves the list of cc defines and places it in the destination
+ variable, in the parent scope
+]]
+assert_name_unique(
+ get_cc_defines
+ COMMAND
+ "Name collision: Function 'get_cc_defines' is already defined elsewhere!"
+)
+function(get_cc_defines gcd_DESTINATION_VARIABLE)
+endfunction()
+
+##TODO Retrieves the value for a given cc define
+function(get_cc_define_value gcdv_ARG gcdv_DESTINATION_VARIABLE)
+endfunction()
+
+##TODO Retrieves the formatted string for a cc define
+function(get_formatted_cc_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
 endfunction()
 
 #TODO Add compiler or linker flags, segmented by compiler
@@ -514,4 +693,17 @@ assert_name_unique(
  "elsewhere!"
 )
 function(add_cc_or_ld_argument)
+endfunction()
+
+#[[
+ TODO Retrieves the list of cc and ld arguments and places it in the
+ destination variable, in the parent scope
+]]
+assert_name_unique(
+ get_cc_or_ld_arguments
+ COMMAND
+ "Name collision: Function 'get_cc_or_ld_arguments' is already defined "
+ "elsewhere!"
+)
+function(get_cc_and_ld_arguments gcala_DESTINATION_VARIABLE)
 endfunction()

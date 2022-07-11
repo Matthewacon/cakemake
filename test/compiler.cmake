@@ -104,6 +104,42 @@ define_test(
  define_compiler_succeeds_when_detecting_unsupported_compiler_with_allow_unsupported
 )
 
+##`get_detected_compiler` tests
+function(
+ get_detected_compiler_with_empty_destination_variable_name_raises_error
+)
+ get_detected_compiler("")
+endfunction()
+define_test(
+ get_detected_compiler_with_empty_destination_variable_name_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_detected_compiler_without_prior_detect_compiler_invocation_raises_error)
+ get_detected_compiler(detected_compiler)
+endfunction()
+define_test(
+ get_detected_compiler_without_prior_detect_compiler_invocation_raises_error
+ REGEX
+  "The detected compiler ID is not set! You must call `detect_compiler` "
+  "before attempting to retrieve the detected compiler ID!"
+ EXPECT_FAIL
+)
+
+function(get_detected_compiler_yields_the_expected_compiler_id)
+ set(compiler_id_var "some_compiler")
+ detect_compiler(
+  unused
+  COMPILER_ID compiler_id_var
+  SUPPORTED_COMPILERS some_compiler
+ )
+
+ get_detected_compiler(detected_compiler)
+ assert_equals("${compiler_id_var}" "${detected_compiler}")
+endfunction()
+define_test(get_detected_compiler_yields_the_expected_compiler_id)
+
 ##`get_supported_compilers` tests
 function(get_supported_compilers_yields_empty_string_when_detect_compiler_is_not_invoked)
  get_supported_compilers(supported_compilers)
@@ -207,6 +243,7 @@ function(
  get_project_compiler_details_prefix(prefix)
 
  set("${prefix}_FORMATTERS" "some_compiler")
+ set("${prefix}_some_compiler_FORMATTER" "some_compiler_formatter")
  function(some_compiler_formatter)
  endfunction()
 
@@ -214,8 +251,10 @@ function(
 endfunction()
 define_test(
  add_compiler_define_formatter_invoked_for_existing_formatter_raises_error
- REGEX "The compiler 'some_compiler' already has a define formatter "
-  "specified! (formatter: 'some_compiler_formatter')"
+ REGEX
+  "The compiler 'some_compiler' already has a define formatter specified! "
+  "\\(formatter: 'some_compiler_formatter'\\)"
+ EXPECT_FAIL
 )
 
 function(add_compiler_define_formatter_sets_the_expected_variables)
@@ -315,5 +354,111 @@ function(remove_compiler_define_formatter_removes_expected_values)
 endfunction()
 define_test(remove_compiler_define_formatter_removes_expected_values)
 
-##TODO `add_cc_define` tests
+##`add_cc_define` tests
+function(add_cc_define_with_empty_define_name_raises_error)
+ add_cc_define("" "")
+endfunction()
+define_test(
+ add_cc_define_with_empty_define_name_raises_error
+ REGEX "The <DEFINE_NAME> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ add_cc_define_with_missing_formatter_for_current_compiler_raises_error
+)
+ set(compiler_id_var "some_compiler")
+ detect_compiler(
+  unused
+  COMPILER_ID compiler_id_var
+  SUPPORTED_COMPILERS "${compiler_id_var}"
+ )
+
+ add_cc_define(some_define "")
+endfunction()
+define_test(
+ add_cc_define_with_missing_formatter_for_current_compiler_raises_error
+ REGEX
+  "Missing formatter for compiler 'some_compiler'! You must specify a define "
+  "formatter using `add_compiler_define_formatter\\(\\)` for the compiler "
+  "'some_compiler'!"
+)
+
+function(add_cc_define_invokes_the_expected_formatter_when_adding_an_argument)
+ set(compiler_id_var "some_compiler")
+ detect_compiler(
+  unused
+  COMPILER_ID compiler_id_var
+  SUPPORTED_COMPILERS some_compiler
+ )
+
+ function(formatter_1 ARG VALUE DEST)
+  set(formatter_1_invoked TRUE PARENT_SCOPE)
+  set("${DEST}" "-D${ARG}=${VALUE}" PARENT_SCOPE)
+ endfunction()
+ add_compiler_define_formatter(some_compiler formatter_1)
+
+ add_cc_define(some_define some_value)
+ assert_true("${formatter_1_invoked}")
+endfunction()
+define_test(
+ add_cc_define_invokes_the_expected_formatter_when_adding_an_argument
+)
+
+function(add_cc_define_with_malformed_compiler_define_formatter_raises_error)
+ set(compiler_id_var "some_compiler")
+ detect_compiler(
+  unused
+  COMPILER_ID compiler_id_var
+  SUPPORTED_COMPILERS some_compiler
+ )
+
+ function(formatter_2 ARG VALUE DEST)
+ endfunction()
+ add_compiler_define_formatter(some_compiler formatter_2)
+
+ add_cc_define(some_define some_value)
+endfunction()
+define_test(
+ add_cc_define_with_malformed_compiler_define_formatter_raises_error
+ REGEX
+  "The define formatter for the compiler 'some_compiler' did not return a "
+  "value! \\(function: 'formatter_2'\\)"
+ EXPECT_FAIL
+)
+
+function(add_cc_define_sets_the_expected_variables)
+ #Get compiler details prefix
+ get_project_compiler_details_prefix(prefix)
+
+ #Set up test
+ set(compiler_id_var "some_compiler")
+ detect_compiler(
+  unused
+  COMPILER_ID compiler_id_var
+  SUPPORTED_COMPILERS some_compiler
+ )
+
+ function(formatter_3 ARG VALUE DEST)
+  set("${DEST}" "-D${ARG}=${VALUE}" PARENT_SCOPE)
+ endfunction()
+ add_compiler_define_formatter(some_compiler formatter_3)
+
+ add_cc_define(some_define some_value)
+
+ set(define_list_var "${prefix}_CC_DEFINES")
+ set(define_value_var "${prefix}_CC_DEFINE_some_define")
+ set(define_formatted_var "${prefix}_CC_DEFINE_some_define_FORMATTED")
+
+ assert_equals("some_define" "${${define_list_var}}")
+ assert_equals("some_value" "${${define_value_var}}")
+ assert_equals("-Dsome_define=some_value" "${${define_formatted_var}}")
+endfunction()
+define_test(add_cc_define_sets_the_expected_variables)
+
+
+##TODO `get_cc_defines` tests
+##TODO `get_cc_define_value` tests
+##TODO `get_formatted_cc_define` tests
 ##TODO `add_cc_or_ld_argument` tests
+##TODO `get_cc_and_ld_arguments` tests

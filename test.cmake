@@ -36,25 +36,41 @@ function(define_test dt_TEST_NAME)
  cmake_parse_arguments(
   dt
   "EXPECT_FAIL"
-  "REGEX"
   ""
+  "REGEX"
   ${ARGN}
  )
-
- #Set expected failure flag for test if `EXPECT_FAIL` flag specified
- if(dt_EXPECT_FAIL)
-  set("${dt_TEST_NAME}_EXPECT_FAIL" TRUE PARENT_SCOPE)
-  set(dt_REGEX_TEST_PROPERTY "FAIL_REGEX")
- else()
-  set(dt_REGEX_TEST_PROPERTY "PASS_REGEX")
- endif()
 
  #[[
   Set expected condition regex, if specified. Sets pass or fail regex based on
   the `EXPECT_FAIL` option flag
  ]]
  if(DEFINED dt_REGEX)
-  set("${dt_TEST_NAME}_${dt_REGEX_TEST_PROPERTY}" "${dt_REGEX}" PARENT_SCOPE)
+  #Concatenate all regex arguments into a single regex string
+  foreach(dt_REGEX_LINE ${dt_REGEX})
+   string(LENGTH "${dt_REGEX_LINE}" dt_REGEX_LINE_LENGTH)
+   if(dt_REGEX_LINE_LENGTH GREATER 0)
+    string(APPEND dt_REGEX_STR "${dt_REGEX_LINE}")
+   endif()
+   unset(dt_REGEX_LINE_LENGTH)
+  endforeach()
+
+  #[[
+   Replace all spaces with `\s*` since cmake auto-wraps message output and
+   truncates trailing whitespace.
+
+   Note: CMake implements its own regex dialect that does not support `\s`, so
+   `[ \t\r\n]` is used instead.
+  ]]
+  string(
+   REPLACE " " "[ \t\r\n]+"
+   dt_REGEX_STR
+   "${dt_REGEX_STR}"
+  )
+
+  #Set property
+  set("${dt_TEST_NAME}_PASS_REGEX" "${dt_REGEX_STR}" PARENT_SCOPE)
+  unset(dt_REGEX_STR)
  endif()
  unset(dt_REGEX_TEST_PROPERTY)
 
