@@ -457,7 +457,52 @@ endfunction()
 define_test(add_cc_define_sets_the_expected_variables)
 
 
-##TODO `get_cc_defines` tests
+##`get_cc_defines` tests
+function(get_cc_defines_with_empty_destination_variable_raises_error)
+ get_cc_defines("")
+endfunction()
+define_test(
+ get_cc_defines_with_empty_destination_variable_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ get_cc_defines_with_no_prior_add_cc_define_invocation_yields_empty_list
+)
+ get_cc_defines(cc_defines)
+ assert_equals("" "${cc_defines}")
+endfunction()
+define_test(
+ get_cc_defines_with_no_prior_add_cc_define_invocation_yields_empty_list
+)
+
+function(
+ get_cc_defines_with_prior_add_cc_define_invocations_yields_expected_list
+)
+ set(compiler_id_var "some_compiler")
+ detect_compiler(
+  unused
+  COMPILER_ID compiler_id_var
+  SUPPORTED_COMPILERS some_compiler
+ )
+ function(formatter_4 ARG VALUE DEST)
+  set("${DEST}" "-D${ARG}=${VALUE}" PARENT_SCOPE)
+ endfunction()
+ add_compiler_define_formatter(some_compiler formatter_4)
+
+ add_cc_define(a a)
+ add_cc_define(b b)
+ add_cc_define(c c)
+
+ #Get cc defines
+ get_cc_defines(cc_defines)
+ assert_equals("a;b;c" "${cc_defines}")
+endfunction()
+define_test(
+ get_cc_defines_with_prior_add_cc_define_invocations_yields_expected_list
+)
+
 ##TODO `get_cc_define_value` tests
 ##TODO `get_formatted_cc_define` tests
 ##TODO `add_cc_or_ld_argument` tests

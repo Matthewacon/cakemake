@@ -665,8 +665,8 @@ function(add_cc_define acd_ARG acd_VALUE)
 endfunction()
 
 #[[
- TODO Retrieves the list of cc defines and places it in the destination
- variable, in the parent scope
+ Retrieves the list of cc defines and places it in the destination variable, in
+ the parent scope
 ]]
 assert_name_unique(
  get_cc_defines
@@ -674,6 +674,33 @@ assert_name_unique(
  "Name collision: Function 'get_cc_defines' is already defined elsewhere!"
 )
 function(get_cc_defines gcd_DESTINATION_VARIABLE)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcd_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND gcd_HELP_MESSAGE
+  "'get_cc_defines' takes the following arguments:"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+  "\n\nEaxmple:"
+  "\n add_cc_define(a a)"
+  "\n add_cc_define(b b)"
+  "\n add_cc_define(c c)"
+  "\n get_cc_defines(cc_defines)"
+  "\n message(\"\${cc_defines}\") #Prints 'a;b;c'"
+ )
+
+ #Validate detsination variable name
+ is_empty(gcd_DESTINATION_VARIABLE_EMPTY "${gcd_DESTINATION_VARIABLE}")
+ if(gcd_DESTINATION_VARIABLE_EMPTY)
+  message("${gcd_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+ endif()
+ unset(gcd_DESTINATION_VARIABLE_EMPTY)
+
+ set(gcd_CC_DEFINES_VAR "${gcd_COMPILER_DETAILS_PREFIX}_CC_DEFINES")
+ set("${gcd_DESTINATION_VARIABLE}" "${${gcd_CC_DEFINES_VAR}}" PARENT_SCOPE)
 endfunction()
 
 ##TODO Retrieves the value for a given cc define
