@@ -503,7 +503,102 @@ define_test(
  get_cc_defines_with_prior_add_cc_define_invocations_yields_expected_list
 )
 
-##TODO `get_cc_define_value` tests
-##TODO `get_formatted_cc_define` tests
+##`get_cc_define_value` tests
+function(get_cc_define_value_with_empty_cc_define_name_raises_error)
+ get_cc_define_value("" "")
+endfunction()
+define_test(
+ get_cc_define_value_with_empty_cc_define_name_raises_error
+ REGEX "The <DEFINE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_cc_define_value_with_empty_destination_variable_name_raises_error)
+ #Compiler define prefix
+ get_project_compiler_details_prefix(prefix)
+ set(cc_defines_list_var "${prefix}_CC_DEFINES")
+ set("${cc_defines_list_var}" "some_arg")
+
+ get_cc_define_value("some_arg" "")
+endfunction()
+define_test(
+ get_cc_define_value_with_empty_destination_variable_name_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_cc_define_value_with_non_existent_cc_define_raises_error)
+ get_cc_define_value(some_define unused)
+endfunction()
+define_test(
+ get_cc_define_value_with_non_existent_cc_define_raises_error
+ REGEX "The cc define 'some_define' does not exist!"
+ EXPECT_FAIL
+)
+
+function(get_cc_define_value_yields_expected_value)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(prefix)
+ set(cc_defines_list_var "${prefix}_CC_DEFINES")
+ set(cc_define_value_var "${prefix}_CC_DEFINE_some_define")
+
+ set("${cc_defines_list_var}" "some_define")
+ set("${cc_define_value_var}" "some_value")
+
+ get_cc_define_value(some_define value)
+ assert_equals("some_value" "${value}")
+endfunction()
+define_test(get_cc_define_value_yields_expected_value)
+
+##`get_formatted_cc_define` tests
+function(get_formatted_cc_define_with_empty_cc_define_name_raises_error)
+ get_formatted_cc_define("" "")
+endfunction()
+define_test(
+ get_formatted_cc_define_with_empty_cc_define_name_raises_error
+ REGEX "The <DEFINE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_formatted_cc_define_with_empty_destination_variable_raises_error)
+ get_formatted_cc_define(some_define "")
+endfunction()
+define_test(
+ get_formatted_cc_define_with_empty_destination_variable_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_formatted_cc_define_with_non_existent_cc_define_name_raises_error)
+ get_formatted_cc_define(some_define unused)
+endfunction()
+define_test(
+ get_formatted_cc_define_with_non_existent_cc_define_name_raises_error
+ REGEX "The cc define 'some_define' does not exist!"
+ EXPECT_FAIL
+)
+
+function(get_formatted_cc_define_yields_the_expected_value)
+ #Set up test
+ set(compiler_id_var "some_compiler")
+ detect_compiler(
+  unused
+  COMPILER_ID compiler_id_var
+  SUPPORTED_COMPILERS some_compiler
+ )
+
+ function(formatter_5 ARG VALUE DEST)
+  set("${DEST}" "-D${ARG}=${VALUE}" PARENT_SCOPE)
+ endfunction()
+ add_compiler_define_formatter(some_compiler formatter_5)
+
+ add_cc_define(some_define some_value)
+
+ #Get formatted cc define
+ get_formatted_cc_define(some_define value)
+ assert_equals("-Dsome_define=some_value" "${value}")
+endfunction()
+define_test(get_formatted_cc_define_yields_the_expected_value)
+
 ##TODO `add_cc_or_ld_argument` tests
 ##TODO `get_cc_and_ld_arguments` tests

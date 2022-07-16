@@ -703,12 +703,134 @@ function(get_cc_defines gcd_DESTINATION_VARIABLE)
  set("${gcd_DESTINATION_VARIABLE}" "${${gcd_CC_DEFINES_VAR}}" PARENT_SCOPE)
 endfunction()
 
-##TODO Retrieves the value for a given cc define
+##Retrieves the value for a given cc define
+assert_name_unique(
+ get_cc_define_value
+ COMMAND
+  "Name collision: The function 'get_cc_define_value' is already defined "
+  "elsewhere!"
+)
 function(get_cc_define_value gcdv_ARG gcdv_DESTINATION_VARIABLE)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcdv_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND gcdv_HELP_MESSAGE
+  "'get_cc_define_value' takes the following arguments:"
+  "\n - (REQUIRED) <DEFINE>: The name of the cc define"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+  "\n\nExample:"
+  "\n add_cc_define(some_define \"Hello world!\")"
+  "\n get_cc_define_value(some_define the_value)"
+  "\n message(\"\${the_value}\") #Prints 'some_value'"
+ )
+
+ #Validate arg
+ is_empty(gcdv_ARG_EMPTY "${gcdv_ARG}")
+ if(gcdv_ARG_EMPTY)
+  message("${gcdv_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DEFINE> argument must not be empty!")
+ endif()
+ unset(gcdv_ARG_EMPTY)
+
+ #Validate destination variable
+ is_empty(gcdv_DESTINATION_VARIABLE_EMPTY "${gcdv_DESTINATION_VARIABLE}")
+ if(gcdv_DESTINATION_VARIABLE_EMPTY)
+  message("${gcdv_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+ endif()
+ unset(gcdv_DESTINATION_VARIABLE_EMPTY)
+
+ set(gcdv_CC_DEFINE_LIST_VAR "${gcdv_COMPILER_DETAILS_PREFIX}_CC_DEFINES")
+ set(
+  gcdv_CC_DEFINE_VAR
+  "${gcdv_COMPILER_DETAILS_PREFIX}_CC_DEFINE_${gcdv_ARG}"
+ )
+
+ #Ensure define exists
+ if(NOT "${gcdv_ARG}" IN_LIST "${gcdv_CC_DEFINE_LIST_VAR}")
+  message("${gcdv_HELP_MESSAGE}")
+  message(FATAL_ERROR "The cc define '${gcdv_ARG}' does not exist!")
+ endif()
+
+ #Set cc define value on destination variable in parent scope
+ set("${gcdv_DESTINATION_VARIABLE}" "${${gcdv_CC_DEFINE_VAR}}" PARENT_SCOPE)
 endfunction()
 
-##TODO Retrieves the formatted string for a cc define
+##Retrieves the formatted string for a cc define
+assert_name_unique(
+ get_formatted_cc_define
+ COMMAND
+  "Name collision: The function 'get_formatted_cc_define' is already defined "
+  "elsewhere!"
+)
 function(get_formatted_cc_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gfcd_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND gfcd_HELP_MESSAGE
+  "'get_formatted_cc_define' takes the following arguments:"
+  "\n - (REQUIRED) <DEFINE>: The name of the cc define"
+  "\n - (REQURIED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+  "\n\nExample:"
+  "\n #Setup"
+  "\n set(compiler_id_var \"some_compiler\")"
+  "\n detect_compiler("
+  "\n  unused"
+  "\n  COMPILER_ID compiler_id_var"
+  "\n  SUPPORTED_COMPILERS some_compiler"
+  "\n )"
+  "\n "
+  "\n function(the_formatter ARG VALUE DEST)"
+  "\n  set(\"\${DEST}\" \"\-D\${ARG}=\${VALUE}\" PARENT_SCOPE)"
+  "\n endfunction()"
+  "\n add_compiler_define_formatter(some_compiler the_formatter)"
+  "\n "
+  "\n #Adding and retrieving formatted cc defines"
+  "\n add_cc_define(some_define \"hello_world\")"
+  "\n get_formatted_cc_define(some_define value)"
+  "\n message(\"\${value}\") #Prints '-Dsome_define=hello_world'"
+ )
+
+ #Validate arg
+ is_empty(gfcd_ARG_EMPTY "${gfcd_ARG}")
+ if(gfcd_ARG_EMPTY)
+  message("${gfcd_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DEFINE> argument must not be empty!")
+ endif()
+ unset(gfcd_ARG_EMPTY)
+
+ #Validate destination variable
+ is_empty(gfcd_DESTINATION_VARIABLE_EMPTY "${gfcd_DESTINATION_VARIABLE}")
+ if(gfcd_DESTINATION_VARIABLE_EMPTY)
+  message("${gfcd_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+ endif()
+ unset(gfcd_DESTINATION_VARIABLE_EMPTY)
+
+ set(gfcd_CC_DEFINE_LIST_VAR "${gfcd_COMPILER_DETAILS_PREFIX}_CC_DEFINES")
+ set(
+  gfcd_CC_DEFINE_FORMATTED_VAR
+  "${gfcd_COMPILER_DETAILS_PREFIX}_CC_DEFINE_${gfcd_ARG}_FORMATTED"
+ )
+
+ #Ensure cc define exists
+ if(NOT "${gfcd_ARG}" IN_LIST "${gfcd_CC_DEFINE_LIST_VAR}")
+  message("${gfcd_HELP_MESSAGE}")
+  message(FATAL_ERROR "The cc define '${gfcd_ARG}' does not exist!")
+ endif()
+
+ #Set the formatted cc define on the destination variable in the parent scope
+ set(
+  "${gfcd_DESTINATION_VARIABLE}"
+  "${${gfcd_CC_DEFINE_FORMATTED_VAR}}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #TODO Add compiler or linker flags, segmented by compiler
