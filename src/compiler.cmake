@@ -7,6 +7,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/util.cmake)
 #[[TODO:
  - Set up global cache variable for prefixing all definitions in this library
  - Add help messages to all functions
+ - Ensure that all relevant functions check that `detect_compiler` was invoked
+   beforehand
 ]]
 
 #[[
@@ -347,10 +349,25 @@ function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
  endif()
  unset(ics_DESTINATION_VARIABLE_EMPTY)
 
+ #Ensure `detect_compiler` was invoked before
+ set(ics_COMPILER_ID_VAR "${ics_COMPILER_DETAILS_PREFIX}_DETECTED_COMPILER_ID")
+ if(NOT DEFINED "${ics_COMPILER_ID_VAR}")
+  message("${ics_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The detected compiler ID is not set! You must call `detect_compiler` "
+   "before checking for supported compilers!"
+  )
+ endif()
+
  #Check if compiler is supported
  set(
   ics_SUPPORTED_COMPILER_LIST_VARIABLE
   "${ics_COMPILER_DETAILS_PREFIX}_SUPPORTED_COMPILERS"
+ )
+ set(
+  ics_ALLOW_UNSUPPORTED_COMPILER
+  "${ics_COMPILER_DETAILS_PREFIX}_ALLOW_UNSUPPORTED"
  )
  if(ics_COMPILER IN_LIST "${ics_SUPPORTED_COMPILER_LIST_VARIABLE}")
   set(ics_COMPILER_SUPPORTED TRUE)
@@ -359,8 +376,16 @@ function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
  endif()
  unset(ics_SUPPORTED_COMPILER_LIST_VARIABLE)
 
- #Set result on destination variable in parent scope
- set("${ics_DESTINATION_VARIABLE}" "${ics_COMPILER_SUPPORTED}" PARENT_SCOPE)
+ if(${${ics_ALLOW_UNSUPPORTED_COMPILER}})
+  #[[
+   If `ALLOW_UNSUPPORTED` was specified when detecting the compiler, always
+   yield true.
+  ]]
+  set("${ics_DESTINATION_VARIABLE}" TRUE PARENT_SCOPE)
+ else()
+  #Set result on destination variable in parent scope
+  set("${ics_DESTINATION_VARIABLE}" "${ics_COMPILER_SUPPORTED}" PARENT_SCOPE)
+ endif()
  unset(ics_COMPILER_SUPPORTED)
 endfunction()
 
@@ -841,7 +866,62 @@ assert_name_unique(
  "Name collision: Function 'add_cc_or_ld_argument' is already defined "
  "elsewhere!"
 )
-function(add_cc_or_ld_argument)
+function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(acola_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND acola_HELP_MESSAGE
+  "'add_cc_or_ld_argument' takes the following arguments:"
+  "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
+  "\n - (REQUIRED) <COMPILER>: The ID of the compiler for the given flag"
+  "\n - (REQURIED) <FLAG>: The flag"
+  "\n\nExample:"
+  "\n add_cc_or_ld_argument(GNU \"-fsanitize=address\")"
+ )
+
+ #Validate arguments
+ is_empty(acola_TYPE_EMPTY "${acola_TYPE}")
+ if(acola_TYPE_EMPTY)
+  message("${acola_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <TYPE> argument must not be empty!")
+ endif()
+ unset(acola_TYPE_EMPTY)
+
+ is_empty(acola_COMPILER_EMPTY "${acola_COMPILER}")
+ if(acola_COMPILER_EMPTY)
+  message("${acola_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+ endif()
+ unset(acola_COMPILER_EMPTY)
+
+ is_empty(acola_FLAG_EMPTY "${acola_FLAG}")
+ if(acola_FLAG_EMPTY)
+  message("${acola_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <FLAG> argument must not be empty!")
+ endif()
+ unset(acola_FLAG)
+
+ list(APPEND acola_VALID_TYPES COMPILER LINKER)
+ if(NOT acola_TYPE IN_LIST acola_VALID_TYPES)
+  message("${acola_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The type '${acola_TYPE}' is not a valid option! Must be one of: "
+   "[COMPILER, LINKER]."
+  )
+ endif()
+ unset(acola_VALID_TYPES)
+
+ is_compiler_supported(acola_COMPILER_SUPPORTED "${acola_COMPILER}")
+ if(NOT acola_COMPILER_SUPPORTED)
+  message("${acola_HELP_MESSAGE}")
+  message(FATAL_ERROR "Compiler '${acola_COMPILER}' is not supported!")
+ endif()
+ unset(acola_COMPILER_SUPPORTED)
+
+
 endfunction()
 
 #[[

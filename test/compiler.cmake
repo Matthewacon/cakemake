@@ -167,30 +167,39 @@ endfunction()
 define_test(get_supported_compilers_yields_expected_value_after_detect_compilers_invocation)
 
 ##`is_compiler_supported` tests
-function(is_compiler_supported_yields_false_for_unsupported_compilers)
- is_compiler_supported(value1 "unsupported_compiler")
- assert_false(value1)
+#TODO Missing argument validation tests
+function(
+ is_compiler_supported_raises_error_when_invoked_before_detect_compiler
+)
+ is_compiler_supported(unused some_compiler)
+endfunction()
+define_test(
+ is_compiler_supported_raises_error_when_invoked_before_detect_compiler
+ REGEX
+  "The detected compiler ID is not set! You must call `detect_compiler` "
+  "before checking for supported compilers!"
+ EXPECT_FAIL
+)
 
- set(stub stub)
+function(is_compiler_supported_yields_false_for_unsupported_compilers)
+ set(stub a)
  detect_compiler(
   unused
   COMPILER_ID stub
   SUPPORTED_COMPILERS a b c
-  ALLOW_UNSUPPORTED
  )
 
- is_compiler_supported(value2 "unsupported_compiler")
- assert_false(value2)
+ is_compiler_supported(value1 unsupported_compiler)
+ assert_false(value1)
 endfunction()
 define_test(is_compiler_supported_yields_false_for_unsupported_compilers)
 
 function(is_compiler_supported_yields_true_for_supported_compilers)
- set(stub stub)
+ set(stub a)
  detect_compiler(
   unused
   COMPILER_ID stub
   SUPPORTED_COMPILERS a b c
-  ALLOW_UNSUPPORTED
  )
 
  is_compiler_supported(value1 a)
@@ -203,6 +212,27 @@ function(is_compiler_supported_yields_true_for_supported_compilers)
  assert_true(value3)
 endfunction()
 define_test(is_compiler_supported_yields_true_for_supported_compilers)
+
+function(
+ is_compiler_supported_yields_true_for_all_values_when_allow_unsupported_is_specified
+)
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS a
+  ALLOW_UNSUPPORTED
+ )
+
+ is_compiler_supported(value1 not_in_list)
+ assert_true(value1)
+
+ is_compiler_supported(value2 a)
+ assert_true(value2)
+endfunction()
+define_test(
+ is_compiler_supported_yields_true_for_all_values_when_allow_unsupported_is_specified
+)
 
 ##`add_compiler_define_formatter` tests
 function(add_compiler_define_formatter_with_empty_compiler_name_raises_erorr)
@@ -601,4 +631,67 @@ endfunction()
 define_test(get_formatted_cc_define_yields_the_expected_value)
 
 ##TODO `add_cc_or_ld_argument` tests
+function(add_cc_or_ld_argument_with_empty_type_raises_error)
+ add_cc_or_ld_argument("" "" "")
+endfunction()
+define_test(
+ add_cc_or_ld_argument_with_empty_type_raises_error
+ REGEX "The <TYPE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(add_cc_or_ld_argument_with_empty_compiler_id_raises_error)
+ add_cc_or_ld_argument(COMPILER "" "")
+endfunction()
+define_test(
+ add_cc_or_ld_argument_with_empty_compiler_id_raises_error
+ REGEX "The <COMPILER> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(add_cc_or_ld_argument_with_emtpy_flag_raises_error)
+ add_cc_or_ld_argument(LINKER some_compiler_id "")
+endfunction()
+define_test(
+ add_cc_or_ld_argument_with_emtpy_flag_raises_error
+ REGEX "The <FLAG> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(add_cc_or_ld_argument_with_invalid_type_raises_error)
+ add_cc_or_ld_argument(INVALID_TYPE some_compiler_id abc)
+endfunction()
+define_test(
+ add_cc_or_ld_argument_with_invalid_type_raises_error
+ REGEX
+  "The type 'INVALID_TYPE' is not a valid option! Must be one of: "
+  "\[COMPILER, LINKER\]"
+ EXPECT_FAIL
+)
+
+function(add_cc_or_ld_argument_with_invalid_compiler_id_variable_raises_error)
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_cc_or_ld_argument(COMPILER some_unsupported_compiler asd)
+endfunction()
+define_test(
+ add_cc_or_ld_argument_with_invalid_compiler_id_variable_raises_error
+ REGEX "Compiler 'some_unsupported_compiler' is not supported!"
+ EXPECT_FAIL
+)
+
+function(
+ add_cc_or_ld_argument_with_invalid_compiler_when_allow_unsupported_is_specified_does_not_yield_error
+)
+ #TODO
+endfunction()
+define_test(
+ add_cc_or_ld_argument_with_invalid_compiler_when_allow_unsupported_is_specified_does_not_yield_error
+)
+
 ##TODO `get_cc_and_ld_arguments` tests
