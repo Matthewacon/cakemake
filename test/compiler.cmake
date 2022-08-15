@@ -688,10 +688,54 @@ define_test(
 function(
  add_cc_or_ld_argument_with_invalid_compiler_when_allow_unsupported_is_specified_does_not_yield_error
 )
- #TODO
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+  ALLOW_UNSUPPORTED
+ )
+
+ add_cc_or_ld_argument(COMPILER some_unsupported_compiler asd)
 endfunction()
 define_test(
  add_cc_or_ld_argument_with_invalid_compiler_when_allow_unsupported_is_specified_does_not_yield_error
 )
+
+function(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
+ get_project_compiler_details_prefix(prefix)
+
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_cc_or_ld_argument(COMPILER stub "-Dsome=value")
+ add_cc_or_ld_argument(COMPILER stub "--hello_world")
+
+ set(compiler_arg_list_var "${prefix}_COMPILER_ARGS")
+ assert_equals("-Dsome=value;--hello_world" "${${compiler_arg_list_var}}")
+endfunction()
+define_test(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
+
+function(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
+ get_project_compiler_details_prefix(prefix)
+
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_cc_or_ld_argument(LINKER stub "--example=123")
+ add_cc_or_ld_argument(LINKER stub "-x")
+
+ set(linker_arg_list_var "${prefix}_LINKER_ARGS")
+ assert_equals("--example=123;-x" "${${linker_arg_list_var}}")
+endfunction()
+define_test(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
 
 ##TODO `get_cc_and_ld_arguments` tests

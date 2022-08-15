@@ -878,7 +878,7 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
   "\n - (REQUIRED) <COMPILER>: The ID of the compiler for the given flag"
   "\n - (REQURIED) <FLAG>: The flag"
   "\n\nExample:"
-  "\n add_cc_or_ld_argument(GNU \"-fsanitize=address\")"
+  "\n add_cc_or_ld_argument(COMPILER GNU \"-fsanitize=address\")"
  )
 
  #Validate arguments
@@ -901,7 +901,7 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
   message("${acola_HELP_MESSAGE}")
   message(FATAL_ERROR "The <FLAG> argument must not be empty!")
  endif()
- unset(acola_FLAG)
+ unset(acola_FLAG_EMPTY)
 
  list(APPEND acola_VALID_TYPES COMPILER LINKER)
  if(NOT acola_TYPE IN_LIST acola_VALID_TYPES)
@@ -921,7 +921,23 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
  endif()
  unset(acola_COMPILER_SUPPORTED)
 
+ #Determine dest var
+ if(acola_TYPE STREQUAL "COMPILER")
+  set(acola_DEST_VAR "${acola_COMPILER_DETAILS_PREFIX}_COMPILER_ARGS")
+ elseif(acola_TYPE STREQUAL "LINKER")
+  set(acola_DEST_VAR "${acola_COMPILER_DETAILS_PREFIX}_LINKER_ARGS")
+ endif()
 
+ #Append to compiler/linker args in parent scope
+ list(
+  APPEND "${acola_DEST_VAR}"
+  "${acola_FLAG}"
+ )
+ set(
+  "${acola_DEST_VAR}"
+  "${${acola_DEST_VAR}}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #[[
@@ -936,3 +952,7 @@ assert_name_unique(
 )
 function(get_cc_and_ld_arguments gcala_DESTINATION_VARIABLE)
 endfunction()
+
+#[[ TODO
+ - add cc define formatters for all supported compilers
+]]
