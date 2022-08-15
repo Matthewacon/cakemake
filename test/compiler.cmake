@@ -715,7 +715,7 @@ function(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
  add_cc_or_ld_argument(COMPILER stub "-Dsome=value")
  add_cc_or_ld_argument(COMPILER stub "--hello_world")
 
- set(compiler_arg_list_var "${prefix}_COMPILER_ARGS")
+ set(compiler_arg_list_var "${prefix}_stub_COMPILER_ARGS")
  assert_equals("-Dsome=value;--hello_world" "${${compiler_arg_list_var}}")
 endfunction()
 define_test(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
@@ -733,9 +733,82 @@ function(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
  add_cc_or_ld_argument(LINKER stub "--example=123")
  add_cc_or_ld_argument(LINKER stub "-x")
 
- set(linker_arg_list_var "${prefix}_LINKER_ARGS")
+ set(linker_arg_list_var "${prefix}_stub_LINKER_ARGS")
  assert_equals("--example=123;-x" "${${linker_arg_list_var}}")
 endfunction()
 define_test(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
 
-##TODO `get_cc_and_ld_arguments` tests
+##`get_cc_and_ld_arguments` tests
+function(get_cc_or_ld_arguments_with_empty_type_raises_error)
+ get_cc_or_ld_arguments("" "" "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_with_empty_type_raises_error
+ REGEX "The <TYPE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_cc_or_ld_arguments_with_empty_compiler_raises_error)
+ get_cc_or_ld_arguments(LINKER "" "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_with_empty_compiler_raises_error
+ REGEX "The <COMPILER> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_cc_or_ld_arguments_with_empty_destination_variable_raises_error)
+ get_cc_or_ld_arguments(COMPILER example "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_with_empty_destination_variable_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_cc_or_ld_arguments_with_invalid_type_raises_error)
+ get_cc_or_ld_arguments(INVALID none unused)
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_with_invalid_type_raises_error
+ REGEX
+  "The type 'INVALID' is not a valid option! Must be one of: "
+  "\[COMPILER, LINKER\]."
+ EXPECT_FAIL
+)
+
+function(get_cc_or_ld_arguments_with_compiler_type_yields_expected_value)
+ set(stub stub)
+
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_cc_or_ld_argument(COMPILER stub "-x")
+ add_cc_or_ld_argument(COMPILER stub "--y")
+ add_cc_or_ld_argument(COMPILER stub "--z=a")
+
+ get_cc_or_ld_arguments(COMPILER stub value)
+ assert_equals("-x;--y;--z=a" "${value}")
+
+endfunction()
+define_test(get_cc_or_ld_arguments_with_compiler_type_yields_expected_value)
+
+function(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
+ set(stub stub)
+
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_cc_or_ld_argument(LINKER stub "-a")
+ add_cc_or_ld_argument(LINKER stub "-b")
+
+ get_cc_or_ld_arguments(LINKER stub value)
+ assert_equals("-a;-b" "${value}")
+endfunction()
+define_test(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)

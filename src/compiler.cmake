@@ -923,9 +923,15 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
 
  #Determine dest var
  if(acola_TYPE STREQUAL "COMPILER")
-  set(acola_DEST_VAR "${acola_COMPILER_DETAILS_PREFIX}_COMPILER_ARGS")
+  set(
+   acola_DEST_VAR
+   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_COMPILER_ARGS"
+  )
  elseif(acola_TYPE STREQUAL "LINKER")
-  set(acola_DEST_VAR "${acola_COMPILER_DETAILS_PREFIX}_LINKER_ARGS")
+  set(
+   acola_DEST_VAR
+   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_LINKER_ARGS"
+  )
  endif()
 
  #Append to compiler/linker args in parent scope
@@ -941,8 +947,8 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
 endfunction()
 
 #[[
- TODO Retrieves the list of cc and ld arguments and places it in the
- destination variable, in the parent scope
+ Retrieves the list of cc and ld arguments and places it in the destination
+ variable, in the parent scope
 ]]
 assert_name_unique(
  get_cc_or_ld_arguments
@@ -950,7 +956,73 @@ assert_name_unique(
  "Name collision: Function 'get_cc_or_ld_arguments' is already defined "
  "elsewhere!"
 )
-function(get_cc_and_ld_arguments gcala_DESTINATION_VARIABLE)
+function(get_cc_or_ld_arguments gcola_TYPE gcola_COMPILER gcola_DESTINATION_VARIABLE)
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcola_COMPILER_DETAILS_PREFIX)
+
+ #Help message
+ string(
+  APPEND gcola_HELP_MESSAGE
+  "'add_cc_or_ld_argument' takes the following arguments:"
+  "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
+  "\n - (REQUIRED) <COMPILER>: The ID of the compiler to retrieve arguments "
+  "for"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
+
+ #Validate arguments
+ is_empty(gcola_TYPE_EMPTY "${gcola_TYPE}")
+ if(gcola_TYPE_EMPTY)
+  message("${gcola_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <TYPE> argument must not be empty!")
+ endif()
+ unset(gcola_TYPE_EMPTY)
+
+ is_empty(gcola_COMPILER_EMPTY "${gcola_COMPILER}")
+ if(gcola_COMPILER_EMPTY)
+  message("${gcola_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+ endif()
+ unset(gcola_COMPILER_EMPTY)
+
+ is_empty(gcola_DESTINATION_VARIABLE_EMPTY "${gcola_DESTINATION_VARIABLE}")
+ if(gcola_DESTINATION_VARIABLE_EMPTY)
+  message("${gcola_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+ endif()
+ unset(gcola_DESTINATION_VARIABLE_EMPTY)
+
+ list(APPEND gcola_ALLOWED_TYPES COMPILER LINKER)
+ if(NOT gcola_TYPE IN_LIST gcola_ALLOWED_TYPES)
+  message("${gcola_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The type '${gcola_TYPE}' is not a valid option! Must be one of: "
+   "[COMPILER, LINKER]."
+  )
+ endif()
+ unset(gcola_ALLOWED_TYPES)
+
+ #Determine which list var to use
+ if(gcola_TYPE STREQUAL "COMPILER")
+  set(
+   gcola_LIST_VAR
+   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_COMPILER_ARGS"
+  )
+ elseif(gcola_TYPE STREQUAL "LINKER")
+  set(
+   gcola_LIST_VAR
+   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_LINKER_ARGS"
+  )
+ endif()
+
+ #Set destination variable in parent scope
+ set(
+  "${gcola_DESTINATION_VARIABLE}"
+  "${${gcola_LIST_VAR}}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #[[ TODO
