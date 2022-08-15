@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.19)
 include_guard(GLOBAL)
 
 include(${CMAKE_CURRENT_LIST_DIR}/util.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/flags.cmake)
 
 #[[TODO:
  - Set up global cache variable for prefixing all definitions in this library
@@ -477,8 +478,6 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
   PARENT_SCOPE
  )
 endfunction()
-
-#TODO Add formatters for default set of supported compilers
 
 #[[
  Gets the name of the compiler-specific define formatter function and places it
@@ -1025,6 +1024,78 @@ function(get_cc_or_ld_arguments gcola_TYPE gcola_COMPILER gcola_DESTINATION_VARI
  )
 endfunction()
 
+#[[
+ Assemble version inline namespace with the project name and version. Using
+ this should prevent linking against binaries compiled with a different version
+ of the same project.
+]]
+assert_name_unique(
+ generate_inline_namespace
+ COMMAND
+ "Name collision: Function 'generate_inline_namespace' command already "
+ "defined elsewhere!"
+)
+function(generate_inline_namespace gin_DESTINATION_VARIABLE)
+ #Help message
+ string(
+  APPEND gin_HELP_MESSAGE
+  "'generate_inline_namespace' takes the following arguments: "
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+  "\n\nExample:"
+  "\n project("
+  "\n  example"
+  "\n  VERSION 1.0.0"
+  "\n )"
+  "\n generate_inline_namespace(value)"
+  "\n message(\"\${value}\") #prints \"example_1_0_0\""
+ )
+
+ #Validate argument
+ is_empty(gin_DESTINATION_VARIABLE_EMPTY "${gin_DESTINATION_VARIABLE}")
+ if(gin_DESTINATION_VARIABLE_EMPTY)
+  message("${gin_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+ endif()
+ unset(gin_DESTINATION_VARIABLE_EMPTY)
+
+ #Ensure `project()` was invoked
+ get_project_prefix(gin_PROJECT_PREFIX)
+ is_empty(CMAKE_PROJECT_VERSION_EMPTY "${CMAKE_PROJECT_VERSION}")
+ if(gin_PROJECT_PREFIX STREQUAL "NO_PROJECT" OR CMAKE_PROJECT_VERSION_EMPTY)
+  message("${gin_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "Cannot generate an inline namespace string without a prior `project()` "
+   "invocation, with a `VERSION` argument!"
+  )
+ endif()
+ unset(CMAKE_PROJECT_VERSION_EMPTY)
+ unset(gin_PROJECT_PREFIX)
+
+ #Replace version string separators with underscores
+ string(
+  REPLACE "." "_"
+  gin_INLINE_NAMESPACE
+  "${CMAKE_PROJECT_NAME}_${CMAKE_PROJECT_VERSION}"
+ )
+
+ #Set value on destination variabble in parent scope
+ set("${gin_DESTINATION_VARIABLE}" "${gin_INLINE_NAMESPACE}" PARENT_SCOPE)
+endfunction()
+
+
+function(generate_guard_symbol gin_DESTINATION_VARIABLE)
+ #[[
+  - argument parsing and validation
+  - function name collision check
+  - help message
+  - ensure `detect_compiler` was invoked
+  - ensure all supplied build flags exist
+ ]]
+endfunction()
+
 #[[ TODO
+ - cross-toolchain test coverage abstraction
  - add cc define formatters for all supported compilers
 ]]

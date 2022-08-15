@@ -812,3 +812,50 @@ function(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
  assert_equals("-a;-b" "${value}")
 endfunction()
 define_test(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
+
+#`generate_inline_namespace` tests
+function(
+ generate_inline_namespace_with_empty_destination_variable_raises_error
+)
+ generate_inline_namespace("")
+endfunction()
+define_test(
+ generate_inline_namespace_with_empty_destination_variable_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ generate_inline_namespace_with_no_prior_project_invocation_raises_error
+)
+ generate_inline_namespace(unused)
+endfunction()
+define_test(
+ generate_inline_namespace_with_no_prior_project_invocation_raises_error
+ REGEX
+  "Cannot generate an inline namespace string without a prior `project\\(\\)` "
+  "invocation, with a `VERSION` argument!"
+ EXPECT_FAIL
+)
+
+function(
+ generate_inline_namespace_with_prior_project_invocation_missing_version_argument_raises_error
+)
+ set(CMAKE_PROJECT_NAME example)
+ generate_inline_namespace(unused)
+endfunction()
+define_test(
+ generate_inline_namespace_with_prior_project_invocation_missing_version_argument_raises_error
+ REGEX
+  "Cannot generate an inline namespace string without a prior `project\\(\\)` "
+  "invocation, with a `VERSION` argument!"
+ EXPECT_FAIL
+)
+
+function(generate_inline_namespace_yields_expected_value)
+ set(CMAKE_PROJECT_NAME example)
+ set(CMAKE_PROJECT_VERSION "1.0.0")
+ generate_inline_namespace(result)
+ assert_equals("example_1_0_0" "${result}")
+endfunction()
+define_test(generate_inline_namespace_yields_expected_value)
