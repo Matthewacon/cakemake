@@ -859,3 +859,125 @@ function(generate_inline_namespace_yields_expected_value)
  assert_equals("example_1_0_0" "${result}")
 endfunction()
 define_test(generate_inline_namespace_yields_expected_value)
+
+##`generate_guard_symbol` tests
+function(generate_guard_symbol_with_empty_destination_variable_raises_error)
+ generate_guard_symbol("")
+endfunction()
+define_test(
+ generate_guard_symbol_with_empty_destination_variable_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(generate_guard_symbol_with_no_abi_breaking_flags_raises_error)
+ generate_guard_symbol(unused)
+endfunction()
+define_test(
+ generate_guard_symbol_with_no_abi_breaking_flags_raises_error
+ REGEX "The 'ABI_BREAKING_FLAGS'... argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(generate_guard_symbol_with_invalid_abi_breaking_flags_raises_error)
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ generate_guard_symbol(
+  unused
+  ABI_BREAKING_FLAGS a b c
+ )
+endfunction()
+define_test(
+ generate_guard_symbol_with_invalid_abi_breaking_flags_raises_error
+ REGEX
+  "The build flag 'a' does not exist!"
+  EXPECT_FAIL
+)
+
+function(
+ generate_guard_symbol_with_abi_breaking_flag_with_no_value_raises_error
+)
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+ add_build_flag(
+  a
+  VALUE "abc"
+ )
+ add_build_flag(b)
+ add_build_flag(
+  c
+  VALUE "def"
+ )
+
+ generate_guard_symbol(
+  unused
+  ABI_BREAKING_FLAGS a b c
+ )
+endfunction()
+define_test(
+ generate_guard_symbol_with_abi_breaking_flag_with_no_value_raises_error
+ REGEX
+  "The flag 'b' does not have a value! All flags must have a value to be used "
+  "in a guard symbol!"
+ EXPECT_FAIL
+)
+
+function(generate_guard_symbol_yields_expected_value)
+ #[[
+  Needs to be set before any other command because running setting this
+  variable clears all set variables, possibly for subproject compatibility
+  reasons?
+ ]]
+ set(CMAKE_PROJECT_NAME example)
+
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_build_flag(
+  flag1
+  VALUE "abc"
+ )
+ add_build_flag(
+  flag2
+  VALUE "def"
+ )
+ add_build_flag(
+  flag3
+  VALUE "ghi"
+ )
+
+ generate_guard_symbol(
+  guard_symbol
+  ABI_BREAKING_FLAGS flag1 flag2 flag3
+ )
+
+ string(
+  APPEND expected_guard_symbol
+  "if_you_are_seeing_this_symbol_in_a_linker_related_error_then_you_are_"
+  "trying_to_link_against_another_binary_with_a_differently_configured_build_"
+  "of_example__this_is_not_allowed_as_some_build_flags_may_break_abi_"
+  "compatibility_between_builds_with_different_configurations__your_"
+  "configuration_is_as_follows"
+  "____flag1__abc"
+  "____flag2__def"
+  "____flag3__ghi"
+ )
+ assert_equals(
+  "${expected_guard_symbol}"
+  "${guard_symbol}"
+ )
+endfunction()
+define_test(generate_guard_symbol_yields_expected_value)

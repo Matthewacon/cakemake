@@ -59,7 +59,7 @@ function(detect_compiler dc_DESTINATION_VARIABLE)
   "\n - (REQUIRED) 'COMPILER_ID' - CMake compiler ID variable to track; ie. "
   "CMAKE_CXX_COMPILER_ID. For more information, see: "
   "https://cmake.org/cmake/help/v3.19/variable/CMAKE_LANG_COMPILER_ID.html"
-  "\n - (REQUIRED) 'SUPPORTED_COMPILERS'... - Space separated list of "
+  "\n - (REQUIRED) 'SUPPORTED_COMPILERS'...: - Space separated list of "
   "compiler IDs supported by your project"
   "\n\nExamples:"
   "\n detect_compiler("
@@ -1084,15 +1084,111 @@ function(generate_inline_namespace gin_DESTINATION_VARIABLE)
  set("${gin_DESTINATION_VARIABLE}" "${gin_INLINE_NAMESPACE}" PARENT_SCOPE)
 endfunction()
 
+#[[
+ Assemble unique symbol guard based on build configuration, to ensure that it
+ is not possible to link against binaries compiled with differently-configured
+ builds of the same project
+]]
+assert_name_unique(
+ generate_guard_symbol
+ COMMAND
+ "Name collision: Function 'generate_guard_symbol' command already defined "
+ "elsewhere!"
+)
+function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
+ #Help message
+ string(
+  APPEND ggs_HELP_MESSAGE
+  "'generate_guard_symbol' takes the following arguments:"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+  "\n - (REQUIRED) 'ABI_BREAKING_FLAGS'...: - Space separated list of build "
+  "flags, configured using `add_build_flag` or `add_fixed_build_flag`, that "
+  "will break ABI compatibility when linking against two different versions "
+  "of the same library"
+  "\n\nExample:"
+  "\n add_build_flag(flag1 value1)"
+  "\n add_build_flag(flag2 value2)"
+  "\n add_build_flag(flag3 value3)"
+  "\n generate_guard_symbol("
+  "\n  guard_symbol_name"
+  "\n  ABI_BREAKING_FLAGS flag1 flag3"
+  "\n )"
+  "\n #[["
+  "\n  Prints a very long guard symbol name with a human-readable warning and "
+  "\n  the configuration of the flags that are breaking ABI compatibility"
+  "\n ]]"
+  "\n message(\"\${guard_symbol_name}\")"
+ )
 
-function(generate_guard_symbol gin_DESTINATION_VARIABLE)
- #[[
-  - argument parsing and validation
-  - function name collision check
-  - help message
-  - ensure `detect_compiler` was invoked
-  - ensure all supplied build flags exist
- ]]
+ #Get arguments
+ cmake_parse_arguments(
+  ggs
+  ""
+  ""
+  "ABI_BREAKING_FLAGS"
+  ${ARGN}
+ )
+
+ #Validate arguments
+ is_empty(ggs_DESTINATION_VARIABLE_EMPTY "${ggs_DESTINATION_VARIABLE}")
+ if(ggs_DESTINATION_VARIABLE_EMPTY)
+  message("${ggs_HELP_MESSAGE}")
+  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+ endif()
+ unset(ggs_DESTINATION_VARIABLE_EMPTYi)
+
+ is_empty(ggs_ABI_BREAKING_FLAGS_EMPTY "${ggs_ABI_BREAKING_FLAGS}")
+ if(ggs_ABI_BREAKING_FLAGS_EMPTY)
+  message("${ggs_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "The 'ABI_BREAKING_FLAGS'... argument must not be empty!"
+  )
+ endif()
+ unset(ggs_ABI_BREAKING_FLAGS_EMPTY)
+
+ #Ensure flags exist and have a value
+ foreach(ggs_FLAG ${ggs_ABI_BREAKING_FLAGS})
+  #Ensure flag exists
+  does_build_flag_exist("${ggs_FLAG}" ggs_FLAG_EXISTS)
+  if(NOT ggs_FLAG_EXISTS)
+   message("${ggs_HELP_MESSAGE}")
+   message(FATAL_ERROR "The build flag '${ggs_FLAG}' does not exist!")
+  endif()
+  unset(ggs_FLAG_EXISTS)
+
+  #Ensure flag has a value
+  is_empty(ggs_FLAG_VALUE_EMPTY "${${ggs_FLAG}}")
+  if(ggs_FLAG_VALUE_EMPTY)
+   message("${ggs_HELP_MESSAGE}")
+   message(
+    FATAL_ERROR
+    "The flag '${ggs_FLAG}' does not have a value! All flags must have a "
+    "value to be used in a guard symbol!"
+   )
+  endif()
+  unset(ggs_FLAG_VALUE_EMPTY)
+ endforeach()
+
+ #Generate guard symbol name
+ string(
+  APPEND ggs_GUARD_SYMBOL
+  "if_you_are_seeing_this_symbol_in_a_linker_related_error_then_you_are_trying_"
+  "to_link_against_another_binary_with_a_differently_configured_build_of_"
+  "${CMAKE_PROJECT_NAME}__this_is_not_allowed_as_some_build_flags_may_break_"
+  "abi_compatibility_between_builds_with_different_configurations__"
+  "your_configuration_is_as_follows"
+ )
+ foreach(ggs_FLAG ${ggs_ABI_BREAKING_FLAGS})
+  string(
+   APPEND ggs_GUARD_SYMBOL
+   "____${ggs_FLAG}__${${ggs_FLAG}}"
+  )
+ endforeach()
+
+ #Set guard symbol on destination variable in parent scope
+ set("${ggs_DESTINATION_VARIABLE}" "${ggs_GUARD_SYMBOL}" PARENT_SCOPE)
 endfunction()
 
 #[[ TODO
