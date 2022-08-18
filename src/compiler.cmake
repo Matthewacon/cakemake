@@ -865,7 +865,7 @@ assert_name_unique(
  "Name collision: Function 'add_cc_or_ld_argument' is already defined "
  "elsewhere!"
 )
-function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
+function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
  #Compiler details prefix
  get_project_compiler_details_prefix(acola_COMPILER_DETAILS_PREFIX)
 
@@ -875,7 +875,7 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
   "'add_cc_or_ld_argument' takes the following arguments:"
   "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
   "\n - (REQUIRED) <COMPILER>: The ID of the compiler for the given flag"
-  "\n - (REQURIED) <FLAG>: The flag"
+  "\n - (REQURIED) 'FLAGS'...: The flag(s)"
   "\n\nExample:"
   "\n add_cc_or_ld_argument(COMPILER GNU \"-fsanitize=address\")"
  )
@@ -895,12 +895,13 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
  endif()
  unset(acola_COMPILER_EMPTY)
 
- is_empty(acola_FLAG_EMPTY "${acola_FLAG}")
- if(acola_FLAG_EMPTY)
+ set(acola_FLAGS "${ARGN}")
+ is_empty(acola_FLAGS_EMPTY "${acola_FLAGS}")
+ if(acola_FLAGS_EMPTY)
   message("${acola_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <FLAG> argument must not be empty!")
+  message(FATAL_ERROR "The 'FLAGS'... argument must not be empty!")
  endif()
- unset(acola_FLAG_EMPTY)
+ unset(acola_FLAGS_EMPTY)
 
  list(APPEND acola_VALID_TYPES COMPILER LINKER)
  if(NOT acola_TYPE IN_LIST acola_VALID_TYPES)
@@ -936,7 +937,7 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER acola_FLAG)
  #Append to compiler/linker args in parent scope
  list(
   APPEND "${acola_DEST_VAR}"
-  "${acola_FLAG}"
+  "${acola_FLAGS}"
  )
  set(
   "${acola_DEST_VAR}"
@@ -962,7 +963,7 @@ function(get_cc_or_ld_arguments gcola_TYPE gcola_COMPILER gcola_DESTINATION_VARI
  #Help message
  string(
   APPEND gcola_HELP_MESSAGE
-  "'add_cc_or_ld_argument' takes the following arguments:"
+  "'get_cc_or_ld_argument' takes the following arguments:"
   "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
   "\n - (REQUIRED) <COMPILER>: The ID of the compiler to retrieve arguments "
   "for"

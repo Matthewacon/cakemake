@@ -408,6 +408,7 @@ function(get_build_flags_pretty gbfp_DESTINATION_VARIABLE)
  #Substitute in spacing and append lines to result string
  string(APPEND gbfp_PRETTY_FLAGS "Build configuration:")
  foreach(FLAG ${${gbfp_BUILD_FLAGS_LIST_VAR}})
+  #TODO Remove colon separator
   #Create flag and value stub string
   set(
    gbfp_PRETTY_FLAG_LINE
@@ -421,6 +422,7 @@ function(get_build_flags_pretty gbfp_DESTINATION_VARIABLE)
    "1 + (${gbfp_MAX_FLAG_LENGTH} - ${gbfp_FLAG_PRETTY_NAME_LENGTH})"
   )
   unset(gbfp_FLAG_PRETTY_NAME_LENGTH)
+  #TODO Make character configurable
   string(REPEAT " " ${gbfp_PRETTY_FLAG_LINE_SPACING} gbfp_SPACING)
   string(
    REPLACE "__SPACING__" "${gbfp_SPACING}"

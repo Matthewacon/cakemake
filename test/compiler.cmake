@@ -654,7 +654,7 @@ function(add_cc_or_ld_argument_with_emtpy_flag_raises_error)
 endfunction()
 define_test(
  add_cc_or_ld_argument_with_emtpy_flag_raises_error
- REGEX "The <FLAG> argument must not be empty!"
+ REGEX "The 'FLAGS'... argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -738,6 +738,26 @@ function(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
 endfunction()
 define_test(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
 
+function(add_cc_or_ld_argument_sets_expected_variable_for_multiple_arguments)
+ get_project_compiler_details_prefix(prefix)
+
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_cc_or_ld_argument(COMPILER stub -a -b -c)
+ add_cc_or_ld_argument(COMPILER stub -d -e -f)
+
+ set(compiler_arg_list_var "${prefix}_stub_COMPILER_ARGS")
+ assert_equals("-a;-b;-c;-d;-e;-f" "${${compiler_arg_list_var}}")
+endfunction()
+define_test(
+ add_cc_or_ld_argument_sets_expected_variable_for_multiple_arguments
+)
+
 ##`get_cc_and_ld_arguments` tests
 function(get_cc_or_ld_arguments_with_empty_type_raises_error)
  get_cc_or_ld_arguments("" "" "")
@@ -813,7 +833,7 @@ function(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
 endfunction()
 define_test(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
 
-#`generate_inline_namespace` tests
+##`generate_inline_namespace` tests
 function(
  generate_inline_namespace_with_empty_destination_variable_raises_error
 )
