@@ -470,18 +470,18 @@ function(remove_compiler_define_formatter_removes_expected_values)
 endfunction()
 define_test(remove_compiler_define_formatter_removes_expected_values)
 
-##`add_cc_define` tests
-function(add_cc_define_with_empty_define_name_raises_error)
- add_cc_define("" "")
+##`add_compiler_define` tests
+function(add_compiler_define_with_empty_define_name_raises_error)
+ add_compiler_define("" "")
 endfunction()
 define_test(
- add_cc_define_with_empty_define_name_raises_error
- REGEX "add_cc_define: The <DEFINE_NAME> argument must not be empty!"
+ add_compiler_define_with_empty_define_name_raises_error
+ REGEX "add_compiler_define: The <DEFINE_NAME> argument must not be empty!"
  EXPECT_FAIL
 )
 
 function(
- add_cc_define_with_missing_formatter_for_current_compiler_raises_error
+ add_compiler_define_with_missing_formatter_for_current_compiler_raises_error
 )
  set(compiler_id_var "some_compiler")
  detect_compiler(
@@ -490,17 +490,19 @@ function(
   SUPPORTED_COMPILERS "${compiler_id_var}"
  )
 
- add_cc_define(some_define "")
+ add_compiler_define(some_define "")
 endfunction()
 define_test(
- add_cc_define_with_missing_formatter_for_current_compiler_raises_error
+ add_compiler_define_with_missing_formatter_for_current_compiler_raises_error
  REGEX
-  "add_cc_define: Missing formatter for compiler 'some_compiler'! You must "
-  "specify a define formatter using `add_compiler_define_formatter\\(\\)` for "
-  "the compiler 'some_compiler'!"
+  "add_compiler_define: Missing formatter for compiler 'some_compiler'! You "
+  "must specify a define formatter using "
+  "`add_compiler_define_formatter\\(\\)` for the compiler 'some_compiler'!"
 )
 
-function(add_cc_define_invokes_the_expected_formatter_when_adding_an_argument)
+function(
+ add_compiler_define_invokes_the_expected_formatter_when_adding_an_argument
+)
  set(compiler_id_var "some_compiler")
  detect_compiler(
   unused
@@ -514,14 +516,16 @@ function(add_cc_define_invokes_the_expected_formatter_when_adding_an_argument)
  endfunction()
  add_compiler_define_formatter(some_compiler formatter_1)
 
- add_cc_define(some_define some_value)
+ add_compiler_define(some_define some_value)
  assert_true("${formatter_1_invoked}")
 endfunction()
 define_test(
- add_cc_define_invokes_the_expected_formatter_when_adding_an_argument
+ add_compiler_define_invokes_the_expected_formatter_when_adding_an_argument
 )
 
-function(add_cc_define_with_malformed_compiler_define_formatter_raises_error)
+function(
+ add_compiler_define_with_malformed_compiler_define_formatter_raises_error
+)
  set(compiler_id_var "some_compiler")
  detect_compiler(
   unused
@@ -533,17 +537,17 @@ function(add_cc_define_with_malformed_compiler_define_formatter_raises_error)
  endfunction()
  add_compiler_define_formatter(some_compiler formatter_2)
 
- add_cc_define(some_define some_value)
+ add_compiler_define(some_define some_value)
 endfunction()
 define_test(
- add_cc_define_with_malformed_compiler_define_formatter_raises_error
+ add_compiler_define_with_malformed_compiler_define_formatter_raises_error
  REGEX
-  "add_cc_define: The define formatter for the compiler 'some_compiler' did "
-  "not return a value! \\(function: 'formatter_2'\\)"
+  "add_compiler_define: The define formatter for the compiler 'some_compiler' "
+  "did not return a value! \\(function: 'formatter_2'\\)"
  EXPECT_FAIL
 )
 
-function(add_cc_define_sets_the_expected_variables)
+function(add_compiler_define_sets_the_expected_variables)
  #Get compiler details prefix
  get_project_compiler_details_prefix(prefix)
 
@@ -560,7 +564,7 @@ function(add_cc_define_sets_the_expected_variables)
  endfunction()
  add_compiler_define_formatter(some_compiler formatter_3)
 
- add_cc_define(some_define some_value)
+ add_compiler_define(some_define some_value)
 
  set(define_list_var "${prefix}_CC_DEFINES")
  set(define_value_var "${prefix}_CC_DEFINE_some_define")
@@ -570,30 +574,30 @@ function(add_cc_define_sets_the_expected_variables)
  assert_equals("some_value" "${${define_value_var}}")
  assert_equals("-Dsome_define=some_value" "${${define_formatted_var}}")
 endfunction()
-define_test(add_cc_define_sets_the_expected_variables)
+define_test(add_compiler_define_sets_the_expected_variables)
 
-##`get_cc_defines` tests
-function(get_cc_defines_with_empty_destination_variable_raises_error)
- get_cc_defines("")
+##`get_compiler_defines` tests
+function(get_compiler_defines_with_empty_destination_variable_raises_error)
+ get_compiler_defines("")
 endfunction()
 define_test(
- get_cc_defines_with_empty_destination_variable_raises_error
+ get_compiler_defines_with_empty_destination_variable_raises_error
  REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
  EXPECT_FAIL
 )
 
 function(
- get_cc_defines_with_no_prior_add_cc_define_invocation_yields_empty_list
+ get_compiler_defines_with_no_prior_add_compiler_define_invocation_yields_empty_list
 )
- get_cc_defines(cc_defines)
+ get_compiler_defines(cc_defines)
  assert_equals("" "${cc_defines}")
 endfunction()
 define_test(
- get_cc_defines_with_no_prior_add_cc_define_invocation_yields_empty_list
+ get_compiler_defines_with_no_prior_add_compiler_define_invocation_yields_empty_list
 )
 
 function(
- get_cc_defines_with_prior_add_cc_define_invocations_yields_expected_list
+ get_compiler_defines_with_prior_add_compiler_define_invocations_yields_expected_list
 )
  set(compiler_id_var "some_compiler")
  detect_compiler(
@@ -606,52 +610,54 @@ function(
  endfunction()
  add_compiler_define_formatter(some_compiler formatter_4)
 
- add_cc_define(a a)
- add_cc_define(b b)
- add_cc_define(c c)
+ add_compiler_define(a a)
+ add_compiler_define(b b)
+ add_compiler_define(c c)
 
  #Get cc defines
- get_cc_defines(cc_defines)
+ get_compiler_defines(cc_defines)
  assert_equals("a;b;c" "${cc_defines}")
 endfunction()
 define_test(
- get_cc_defines_with_prior_add_cc_define_invocations_yields_expected_list
+ get_compiler_defines_with_prior_add_compiler_define_invocations_yields_expected_list
 )
 
-##`get_cc_define_value` tests
-function(get_cc_define_value_with_empty_cc_define_name_raises_error)
- get_cc_define_value("" "")
+##`get_compiler_define_value` tests
+function(get_compiler_define_value_with_empty_cc_define_name_raises_error)
+ get_compiler_define_value("" "")
 endfunction()
 define_test(
- get_cc_define_value_with_empty_cc_define_name_raises_error
+ get_compiler_define_value_with_empty_cc_define_name_raises_error
  REGEX "The <DEFINE> argument must not be empty!"
  EXPECT_FAIL
 )
 
-function(get_cc_define_value_with_empty_destination_variable_name_raises_error)
+function(
+ get_compiler_define_value_with_empty_destination_variable_name_raises_error
+)
  #Compiler define prefix
  get_project_compiler_details_prefix(prefix)
  set(cc_defines_list_var "${prefix}_CC_DEFINES")
  set("${cc_defines_list_var}" "some_arg")
 
- get_cc_define_value("some_arg" "")
+ get_compiler_define_value("some_arg" "")
 endfunction()
 define_test(
- get_cc_define_value_with_empty_destination_variable_name_raises_error
+ get_compiler_define_value_with_empty_destination_variable_name_raises_error
  REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
  EXPECT_FAIL
 )
 
-function(get_cc_define_value_with_non_existent_cc_define_raises_error)
- get_cc_define_value(some_define unused)
+function(get_compiler_define_value_with_non_existent_cc_define_raises_error)
+ get_compiler_define_value(some_define unused)
 endfunction()
 define_test(
- get_cc_define_value_with_non_existent_cc_define_raises_error
+ get_compiler_define_value_with_non_existent_cc_define_raises_error
  REGEX "The cc define 'some_define' does not exist!"
  EXPECT_FAIL
 )
 
-function(get_cc_define_value_yields_expected_value)
+function(get_compiler_define_value_yields_expected_value)
  #Compiler details prefix
  get_project_compiler_details_prefix(prefix)
  set(cc_defines_list_var "${prefix}_CC_DEFINES")
@@ -660,40 +666,44 @@ function(get_cc_define_value_yields_expected_value)
  set("${cc_defines_list_var}" "some_define")
  set("${cc_define_value_var}" "some_value")
 
- get_cc_define_value(some_define value)
+ get_compiler_define_value(some_define value)
  assert_equals("some_value" "${value}")
 endfunction()
-define_test(get_cc_define_value_yields_expected_value)
+define_test(get_compiler_define_value_yields_expected_value)
 
-##`get_formatted_cc_define` tests
-function(get_formatted_cc_define_with_empty_cc_define_name_raises_error)
- get_formatted_cc_define("" "")
+##`get_formatted_compiler_define` tests
+function(get_formatted_compiler_define_with_empty_cc_define_name_raises_error)
+ get_formatted_compiler_define("" "")
 endfunction()
 define_test(
- get_formatted_cc_define_with_empty_cc_define_name_raises_error
+ get_formatted_compiler_define_with_empty_cc_define_name_raises_error
  REGEX "The <DEFINE> argument must not be empty!"
  EXPECT_FAIL
 )
 
-function(get_formatted_cc_define_with_empty_destination_variable_raises_error)
- get_formatted_cc_define(some_define "")
+function(
+ get_formatted_compiler_define_with_empty_destination_variable_raises_error
+)
+ get_formatted_compiler_define(some_define "")
 endfunction()
 define_test(
- get_formatted_cc_define_with_empty_destination_variable_raises_error
+ get_formatted_compiler_define_with_empty_destination_variable_raises_error
  REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
  EXPECT_FAIL
 )
 
-function(get_formatted_cc_define_with_non_existent_cc_define_name_raises_error)
- get_formatted_cc_define(some_define unused)
+function(
+ get_formatted_compiler_define_with_non_existent_cc_define_name_raises_error
+)
+ get_formatted_compiler_define(some_define unused)
 endfunction()
 define_test(
- get_formatted_cc_define_with_non_existent_cc_define_name_raises_error
+ get_formatted_compiler_define_with_non_existent_cc_define_name_raises_error
  REGEX "The cc define 'some_define' does not exist!"
  EXPECT_FAIL
 )
 
-function(get_formatted_cc_define_yields_the_expected_value)
+function(get_formatted_compiler_define_yields_the_expected_value)
  #Set up test
  set(compiler_id_var "some_compiler")
  detect_compiler(
@@ -707,13 +717,13 @@ function(get_formatted_cc_define_yields_the_expected_value)
  endfunction()
  add_compiler_define_formatter(some_compiler formatter_5)
 
- add_cc_define(some_define some_value)
+ add_compiler_define(some_define some_value)
 
  #Get formatted cc define
- get_formatted_cc_define(some_define value)
+ get_formatted_compiler_define(some_define value)
  assert_equals("-Dsome_define=some_value" "${value}")
 endfunction()
-define_test(get_formatted_cc_define_yields_the_expected_value)
+define_test(get_formatted_compiler_define_yields_the_expected_value)
 
 ##TODO `add_cc_or_ld_argument` tests
 function(add_cc_or_ld_argument_with_empty_type_raises_error)
