@@ -638,8 +638,8 @@ function(add_compiler_define acd_ARG acd_VALUE)
  string(
   APPEND acd_HELP_MESSAGE
   "'add_compiler_define' takes the following arguments:"
-  "\n - (REQUIRED) <DEFINE_NAME>: The name of the cc define"
-  "\n - (REQUIRED) <VALUE>: The value of the cc define"
+  "\n - (REQUIRED) <DEFINE_NAME>: The name of the compiler define"
+  "\n - (REQUIRED) <VALUE>: The value of the compiler define"
   "\n\nExample:"
   "\n detect_compiler("
   "\n  unused"
@@ -649,7 +649,7 @@ function(add_compiler_define acd_ARG acd_VALUE)
   "\n add_compiler_define(\"FIRST\" \"123\")"
   "\n add_compiler_define(\"SECOND\" \"456\")"
   "\n "
-  "\n #Get the list of cc defines"
+  "\n #Get the list of compiler defines"
   "\n get_compiler_defines(cc_defines)"
   "\n message(\"\${cc_defines}\") #Prints \"FIRST;SECOND\""
   "\n "
@@ -662,7 +662,7 @@ function(add_compiler_define acd_ARG acd_VALUE)
   "\n message(\"\${SECOND_formatted}\") #Prints '-DSECOND=456'"
  )
 
- #Validate cc define argument name
+ #Validate compiler define argument name
  is_empty(acd_ARG_EMPTY "${acd_ARG}")
  if(acd_ARG_EMPTY)
   message("${acd_HELP_MESSAGE}")
@@ -726,23 +726,23 @@ function(add_compiler_define acd_ARG acd_VALUE)
  endif()
  unset(acd_FORMATTED_DEFINE_EMPTY)
 
- #Add arg to list of cc defines
+ #Add arg to list of compiler defines
  list(
   APPEND "${acd_DEFINE_LIST_VAR}"
   "${acd_ARG}"
  )
  set("${acd_DEFINE_LIST_VAR}" "${${acd_DEFINE_LIST_VAR}}" PARENT_SCOPE)
 
- #Associate value with cc define
+ #Associate value with compiler define
  set("${acd_DEFINE_VALUE_VAR}" "${acd_VALUE}" PARENT_SCOPE)
 
- #Associate formatted argument with cc define
+ #Associate formatted argument with compiler define
  set("${acd_DEFINE_FORMATTED_VAR}" "${acd_FORMATTED_DEFINE}" PARENT_SCOPE)
 endfunction()
 
 #[[
- Retrieves the list of cc defines and places it in the destination variable, in
- the parent scope
+ Retrieves the list of compiler defines and places it in the destination
+ variable, in the parent scope
 ]]
 assert_name_unique(
  get_compiler_defines
@@ -750,9 +750,6 @@ assert_name_unique(
  "Name collision: Function 'get_compiler_defines' is already defined elsewhere!"
 )
 function(get_compiler_defines gcd_DESTINATION_VARIABLE)
- #Compiler details prefix
- get_project_compiler_details_prefix(gcd_COMPILER_DETAILS_PREFIX)
-
  #Help message
  string(
   APPEND gcd_HELP_MESSAGE
@@ -771,15 +768,22 @@ function(get_compiler_defines gcd_DESTINATION_VARIABLE)
  is_empty(gcd_DESTINATION_VARIABLE_EMPTY "${gcd_DESTINATION_VARIABLE}")
  if(gcd_DESTINATION_VARIABLE_EMPTY)
   message("${gcd_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_compiler_defines: The <DESTINATION_VARIABLE> argument must not be "
+   "empty!"
+  )
  endif()
  unset(gcd_DESTINATION_VARIABLE_EMPTY)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcd_COMPILER_DETAILS_PREFIX)
 
  set(gcd_CC_DEFINES_VAR "${gcd_COMPILER_DETAILS_PREFIX}_CC_DEFINES")
  set("${gcd_DESTINATION_VARIABLE}" "${${gcd_CC_DEFINES_VAR}}" PARENT_SCOPE)
 endfunction()
 
-#Retrieves the value for a given cc define
+#Retrieves the value for a given compiler define
 assert_name_unique(
  get_compiler_define_value
  COMMAND
@@ -794,7 +798,7 @@ function(get_compiler_define_value gcdv_ARG gcdv_DESTINATION_VARIABLE)
  string(
   APPEND gcdv_HELP_MESSAGE
   "'get_compiler_define_value' takes the following arguments:"
-  "\n - (REQUIRED) <DEFINE>: The name of the cc define"
+  "\n - (REQUIRED) <DEFINE>: The name of the compiler define"
   "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
   "variable to place the result in, in the parent scope"
   "\n\nExample:"
@@ -807,7 +811,10 @@ function(get_compiler_define_value gcdv_ARG gcdv_DESTINATION_VARIABLE)
  is_empty(gcdv_ARG_EMPTY "${gcdv_ARG}")
  if(gcdv_ARG_EMPTY)
   message("${gcdv_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DEFINE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_compiler_define_value: The <DEFINE> argument must not be empty!"
+  )
  endif()
  unset(gcdv_ARG_EMPTY)
 
@@ -815,7 +822,11 @@ function(get_compiler_define_value gcdv_ARG gcdv_DESTINATION_VARIABLE)
  is_empty(gcdv_DESTINATION_VARIABLE_EMPTY "${gcdv_DESTINATION_VARIABLE}")
  if(gcdv_DESTINATION_VARIABLE_EMPTY)
   message("${gcdv_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_compiler_define_value: The <DESTINATION_VARIABLE> argument must not "
+   "be empty!"
+  )
  endif()
  unset(gcdv_DESTINATION_VARIABLE_EMPTY)
 
@@ -828,19 +839,23 @@ function(get_compiler_define_value gcdv_ARG gcdv_DESTINATION_VARIABLE)
  #Ensure define exists
  if(NOT "${gcdv_ARG}" IN_LIST "${gcdv_CC_DEFINE_LIST_VAR}")
   message("${gcdv_HELP_MESSAGE}")
-  message(FATAL_ERROR "The cc define '${gcdv_ARG}' does not exist!")
+  message(
+   FATAL_ERROR
+   "get_compiler_define_value: The compiler define '${gcdv_ARG}' does not "
+   "exist!"
+  )
  endif()
 
- #Set cc define value on destination variable in parent scope
+ #Set compiler define value on destination variable in parent scope
  set("${gcdv_DESTINATION_VARIABLE}" "${${gcdv_CC_DEFINE_VAR}}" PARENT_SCOPE)
 endfunction()
 
-#Retrieves the formatted string for a cc define
+#Retrieves the formatted string for a compiler define
 assert_name_unique(
  get_formatted_compiler_define
  COMMAND
-  "Name collision: The function 'get_formatted_compiler_define' is already defined "
-  "elsewhere!"
+  "Name collision: The function 'get_formatted_compiler_define' is already "
+  "defined elsewhere!"
 )
 function(get_formatted_compiler_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
  #Compiler details prefix
@@ -850,7 +865,7 @@ function(get_formatted_compiler_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
  string(
   APPEND gfcd_HELP_MESSAGE
   "'get_formatted_compiler_define' takes the following arguments:"
-  "\n - (REQUIRED) <DEFINE>: The name of the cc define"
+  "\n - (REQUIRED) <DEFINE>: The name of the compiler define"
   "\n - (REQURIED) <DESTINATION_VARIABLE>: The name of the destination "
   "variable to place the result in, in the parent scope"
   "\n\nExample:"
@@ -867,7 +882,7 @@ function(get_formatted_compiler_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
   "\n endfunction()"
   "\n add_compiler_define_formatter(some_compiler the_formatter)"
   "\n "
-  "\n #Adding and retrieving formatted cc defines"
+  "\n #Adding and retrieving formatted compiler defines"
   "\n add_compiler_define(some_define \"hello_world\")"
   "\n get_formatted_compiler_define(some_define value)"
   "\n message(\"\${value}\") #Prints '-Dsome_define=hello_world'"
@@ -877,7 +892,10 @@ function(get_formatted_compiler_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
  is_empty(gfcd_ARG_EMPTY "${gfcd_ARG}")
  if(gfcd_ARG_EMPTY)
   message("${gfcd_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DEFINE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_formatted_compiler_define: The <DEFINE> argument must not be empty!"
+  )
  endif()
  unset(gfcd_ARG_EMPTY)
 
@@ -885,7 +903,11 @@ function(get_formatted_compiler_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
  is_empty(gfcd_DESTINATION_VARIABLE_EMPTY "${gfcd_DESTINATION_VARIABLE}")
  if(gfcd_DESTINATION_VARIABLE_EMPTY)
   message("${gfcd_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_formatted_compiler_define: The <DESTINATION_VARIABLE> argument must "
+   "not be empty!"
+  )
  endif()
  unset(gfcd_DESTINATION_VARIABLE_EMPTY)
 
@@ -895,13 +917,20 @@ function(get_formatted_compiler_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
   "${gfcd_COMPILER_DETAILS_PREFIX}_CC_DEFINE_${gfcd_ARG}_FORMATTED"
  )
 
- #Ensure cc define exists
+ #Ensure compiler define exists
  if(NOT "${gfcd_ARG}" IN_LIST "${gfcd_CC_DEFINE_LIST_VAR}")
   message("${gfcd_HELP_MESSAGE}")
-  message(FATAL_ERROR "The cc define '${gfcd_ARG}' does not exist!")
+  message(
+   FATAL_ERROR
+   "get_formatted_compiler_define: The compiler define '${gfcd_ARG}' does not "
+   "exist!"
+  )
  endif()
 
- #Set the formatted cc define on the destination variable in the parent scope
+ #[[
+  Set the formatted compiler define on the destination variable in the parent
+  scope
+ ]]
  set(
   "${gfcd_DESTINATION_VARIABLE}"
   "${${gfcd_CC_DEFINE_FORMATTED_VAR}}"
@@ -927,9 +956,6 @@ assert_name_unique(
  "elsewhere!"
 )
 function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
- #Compiler details prefix
- get_project_compiler_details_prefix(acola_COMPILER_DETAILS_PREFIX)
-
  #Help message
  string(
   APPEND acola_HELP_MESSAGE
@@ -945,14 +971,20 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
  is_empty(acola_TYPE_EMPTY "${acola_TYPE}")
  if(acola_TYPE_EMPTY)
   message("${acola_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <TYPE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_argument: The <TYPE> argument must not be empty!"
+  )
  endif()
  unset(acola_TYPE_EMPTY)
 
  is_empty(acola_COMPILER_EMPTY "${acola_COMPILER}")
  if(acola_COMPILER_EMPTY)
   message("${acola_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_argument: The <COMPILER> argument must not be empty!"
+  )
  endif()
  unset(acola_COMPILER_EMPTY)
 
@@ -960,7 +992,10 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
  is_empty(acola_FLAGS_EMPTY "${acola_FLAGS}")
  if(acola_FLAGS_EMPTY)
   message("${acola_HELP_MESSAGE}")
-  message(FATAL_ERROR "The 'FLAGS'... argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_argument: The 'FLAGS'... argument must not be empty!"
+  )
  endif()
  unset(acola_FLAGS_EMPTY)
 
@@ -969,8 +1004,8 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
   message("${acola_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The type '${acola_TYPE}' is not a valid option! Must be one of: "
-   "[COMPILER, LINKER]."
+   "add_cc_or_ld_argument: The type '${acola_TYPE}' is not a valid option! "
+   "Must be one of: [COMPILER, LINKER]."
   )
  endif()
  unset(acola_VALID_TYPES)
@@ -978,9 +1013,15 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
  is_compiler_supported(acola_COMPILER_SUPPORTED "${acola_COMPILER}")
  if(NOT acola_COMPILER_SUPPORTED)
   message("${acola_HELP_MESSAGE}")
-  message(FATAL_ERROR "Compiler '${acola_COMPILER}' is not supported!")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_argument: Compiler '${acola_COMPILER}' is not supported!"
+  )
  endif()
  unset(acola_COMPILER_SUPPORTED)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(acola_COMPILER_DETAILS_PREFIX)
 
  #Determine dest var
  if(acola_TYPE STREQUAL "COMPILER")
@@ -1023,10 +1064,11 @@ assert_name_unique(
  "Name collision: Function 'get_cc_or_ld_arguments' is already defined "
  "elsewhere!"
 )
-function(get_cc_or_ld_arguments gcola_TYPE gcola_COMPILER gcola_DESTINATION_VARIABLE)
- #Compiler details prefix
- get_project_compiler_details_prefix(gcola_COMPILER_DETAILS_PREFIX)
-
+function(get_cc_or_ld_arguments
+ gcola_TYPE
+ gcola_COMPILER
+ gcola_DESTINATION_VARIABLE
+)
  #Help message
  string(
   APPEND gcola_HELP_MESSAGE
@@ -1042,21 +1084,31 @@ function(get_cc_or_ld_arguments gcola_TYPE gcola_COMPILER gcola_DESTINATION_VARI
  is_empty(gcola_TYPE_EMPTY "${gcola_TYPE}")
  if(gcola_TYPE_EMPTY)
   message("${gcola_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <TYPE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments: The <TYPE> argument must not be empty!"
+  )
  endif()
  unset(gcola_TYPE_EMPTY)
 
  is_empty(gcola_COMPILER_EMPTY "${gcola_COMPILER}")
  if(gcola_COMPILER_EMPTY)
   message("${gcola_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments: The <COMPILER> argument must not be empty!"
+  )
  endif()
  unset(gcola_COMPILER_EMPTY)
 
  is_empty(gcola_DESTINATION_VARIABLE_EMPTY "${gcola_DESTINATION_VARIABLE}")
  if(gcola_DESTINATION_VARIABLE_EMPTY)
   message("${gcola_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments: The <DESTINATION_VARIABLE> argument must not be "
+   "empty!"
+  )
  endif()
  unset(gcola_DESTINATION_VARIABLE_EMPTY)
 
@@ -1065,11 +1117,14 @@ function(get_cc_or_ld_arguments gcola_TYPE gcola_COMPILER gcola_DESTINATION_VARI
   message("${gcola_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The type '${gcola_TYPE}' is not a valid option! Must be one of: "
-   "[COMPILER, LINKER]."
+   "get_cc_or_ld_arguments: The type '${gcola_TYPE}' is not a valid option! "
+   "Must be one of: [COMPILER, LINKER]."
   )
  endif()
  unset(gcola_ALLOWED_TYPES)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcola_COMPILER_DETAILS_PREFIX)
 
  #Determine which list var to use
  if(gcola_TYPE STREQUAL "COMPILER")
@@ -1145,7 +1200,11 @@ function(generate_inline_namespace gin_DESTINATION_VARIABLE)
  is_empty(gin_DESTINATION_VARIABLE_EMPTY "${gin_DESTINATION_VARIABLE}")
  if(gin_DESTINATION_VARIABLE_EMPTY)
   message("${gin_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "generate_inline_namespace: The <DESTINATION_VARIABLE> argument must not "
+   "be empty!"
+  )
  endif()
  unset(gin_DESTINATION_VARIABLE_EMPTY)
 
@@ -1156,8 +1215,8 @@ function(generate_inline_namespace gin_DESTINATION_VARIABLE)
   message("${gin_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "Cannot generate an inline namespace string without a prior `project()` "
-   "invocation, with a `VERSION` argument!"
+   "generate_inline_namespace: Cannot generate an inline namespace string "
+   "without a prior `project()` invocation, with a `VERSION` argument!"
   )
  endif()
  unset(CMAKE_PROJECT_VERSION_EMPTY)
@@ -1224,7 +1283,11 @@ function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
  is_empty(ggs_DESTINATION_VARIABLE_EMPTY "${ggs_DESTINATION_VARIABLE}")
  if(ggs_DESTINATION_VARIABLE_EMPTY)
   message("${ggs_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "generate_guard_symbol: The <DESTINATION_VARIABLE> argument must not be "
+   "empty!"
+  )
  endif()
  unset(ggs_DESTINATION_VARIABLE_EMPTYi)
 
@@ -1233,7 +1296,8 @@ function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
   message("${ggs_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The 'ABI_BREAKING_FLAGS'... argument must not be empty!"
+   "generate_guard_symbol: The 'ABI_BREAKING_FLAGS'... argument must not be "
+   "empty!"
   )
  endif()
  unset(ggs_ABI_BREAKING_FLAGS_EMPTY)
@@ -1244,7 +1308,10 @@ function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
   does_build_flag_exist("${ggs_FLAG}" ggs_FLAG_EXISTS)
   if(NOT ggs_FLAG_EXISTS)
    message("${ggs_HELP_MESSAGE}")
-   message(FATAL_ERROR "The build flag '${ggs_FLAG}' does not exist!")
+   message(
+    FATAL_ERROR
+    "generate_guard_symbol: The build flag '${ggs_FLAG}' does not exist!"
+   )
   endif()
   unset(ggs_FLAG_EXISTS)
 
@@ -1254,8 +1321,8 @@ function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
    message("${ggs_HELP_MESSAGE}")
    message(
     FATAL_ERROR
-    "The flag '${ggs_FLAG}' does not have a value! All flags must have a "
-    "value to be used in a guard symbol!"
+    "generate_guard_symbol: The flag '${ggs_FLAG}' does not have a value! All "
+    "flags must have a value to be used in a guard symbol!"
    )
   endif()
   unset(ggs_FLAG_VALUE_EMPTY)

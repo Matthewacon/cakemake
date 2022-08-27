@@ -582,7 +582,9 @@ function(get_compiler_defines_with_empty_destination_variable_raises_error)
 endfunction()
 define_test(
  get_compiler_defines_with_empty_destination_variable_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "get_compiler_defines: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -628,7 +630,7 @@ function(get_compiler_define_value_with_empty_cc_define_name_raises_error)
 endfunction()
 define_test(
  get_compiler_define_value_with_empty_cc_define_name_raises_error
- REGEX "The <DEFINE> argument must not be empty!"
+ REGEX "get_compiler_define_value: The <DEFINE> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -644,7 +646,9 @@ function(
 endfunction()
 define_test(
  get_compiler_define_value_with_empty_destination_variable_name_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "get_compiler_define_value: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -653,7 +657,9 @@ function(get_compiler_define_value_with_non_existent_cc_define_raises_error)
 endfunction()
 define_test(
  get_compiler_define_value_with_non_existent_cc_define_raises_error
- REGEX "The cc define 'some_define' does not exist!"
+ REGEX
+  "get_compiler_define_value: The compiler define 'some_define' does not "
+  "exist!"
  EXPECT_FAIL
 )
 
@@ -677,7 +683,8 @@ function(get_formatted_compiler_define_with_empty_cc_define_name_raises_error)
 endfunction()
 define_test(
  get_formatted_compiler_define_with_empty_cc_define_name_raises_error
- REGEX "The <DEFINE> argument must not be empty!"
+ REGEX
+  "get_formatted_compiler_define: The <DEFINE> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -688,7 +695,9 @@ function(
 endfunction()
 define_test(
  get_formatted_compiler_define_with_empty_destination_variable_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "get_formatted_compiler_define: The <DESTINATION_VARIABLE> argument must "
+  "not be empty!"
  EXPECT_FAIL
 )
 
@@ -699,7 +708,9 @@ function(
 endfunction()
 define_test(
  get_formatted_compiler_define_with_non_existent_cc_define_name_raises_error
- REGEX "The cc define 'some_define' does not exist!"
+ REGEX
+  "get_formatted_compiler_define: The compiler define 'some_define' does not "
+  "exist!"
  EXPECT_FAIL
 )
 
@@ -725,13 +736,13 @@ function(get_formatted_compiler_define_yields_the_expected_value)
 endfunction()
 define_test(get_formatted_compiler_define_yields_the_expected_value)
 
-##TODO `add_cc_or_ld_argument` tests
+##`add_cc_or_ld_argument` tests
 function(add_cc_or_ld_argument_with_empty_type_raises_error)
  add_cc_or_ld_argument("" "" "")
 endfunction()
 define_test(
  add_cc_or_ld_argument_with_empty_type_raises_error
- REGEX "The <TYPE> argument must not be empty!"
+ REGEX "add_cc_or_ld_argument: The <TYPE> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -740,7 +751,7 @@ function(add_cc_or_ld_argument_with_empty_compiler_id_raises_error)
 endfunction()
 define_test(
  add_cc_or_ld_argument_with_empty_compiler_id_raises_error
- REGEX "The <COMPILER> argument must not be empty!"
+ REGEX "add_cc_or_ld_argument: The <COMPILER> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -749,7 +760,7 @@ function(add_cc_or_ld_argument_with_emtpy_flag_raises_error)
 endfunction()
 define_test(
  add_cc_or_ld_argument_with_emtpy_flag_raises_error
- REGEX "The 'FLAGS'... argument must not be empty!"
+ REGEX "add_cc_or_ld_argument: The 'FLAGS'... argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -759,8 +770,8 @@ endfunction()
 define_test(
  add_cc_or_ld_argument_with_invalid_type_raises_error
  REGEX
-  "The type 'INVALID_TYPE' is not a valid option! Must be one of: "
-  "\[COMPILER, LINKER\]"
+  "add_cc_or_ld_argument: The type 'INVALID_TYPE' is not a valid option! Must "
+  "be one of: \[COMPILER, LINKER\]"
  EXPECT_FAIL
 )
 
@@ -776,7 +787,9 @@ function(add_cc_or_ld_argument_with_invalid_compiler_id_variable_raises_error)
 endfunction()
 define_test(
  add_cc_or_ld_argument_with_invalid_compiler_id_variable_raises_error
- REGEX "Compiler 'some_unsupported_compiler' is not supported!"
+ REGEX
+  "add_cc_or_ld_argument: Compiler 'some_unsupported_compiler' is not "
+  "supported!"
  EXPECT_FAIL
 )
 
@@ -859,7 +872,7 @@ function(get_cc_or_ld_arguments_with_empty_type_raises_error)
 endfunction()
 define_test(
  get_cc_or_ld_arguments_with_empty_type_raises_error
- REGEX "The <TYPE> argument must not be empty!"
+ REGEX "get_cc_or_ld_arguments: The <TYPE> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -868,7 +881,7 @@ function(get_cc_or_ld_arguments_with_empty_compiler_raises_error)
 endfunction()
 define_test(
  get_cc_or_ld_arguments_with_empty_compiler_raises_error
- REGEX "The <COMPILER> argument must not be empty!"
+ REGEX "get_cc_or_ld_arguments: The <COMPILER> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -877,7 +890,9 @@ function(get_cc_or_ld_arguments_with_empty_destination_variable_raises_error)
 endfunction()
 define_test(
  get_cc_or_ld_arguments_with_empty_destination_variable_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "get_cc_or_ld_arguments: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -887,8 +902,8 @@ endfunction()
 define_test(
  get_cc_or_ld_arguments_with_invalid_type_raises_error
  REGEX
-  "The type 'INVALID' is not a valid option! Must be one of: "
-  "\[COMPILER, LINKER\]."
+  "get_cc_or_ld_arguments: The type 'INVALID' is not a valid option! Must be "
+  "one of: \[COMPILER, LINKER\]."
  EXPECT_FAIL
 )
 
@@ -936,7 +951,9 @@ function(
 endfunction()
 define_test(
  generate_inline_namespace_with_empty_destination_variable_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "generate_inline_namespace: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -948,8 +965,8 @@ endfunction()
 define_test(
  generate_inline_namespace_with_no_prior_project_invocation_raises_error
  REGEX
-  "Cannot generate an inline namespace string without a prior `project\\(\\)` "
-  "invocation, with a `VERSION` argument!"
+  "generate_inline_namespace: Cannot generate an inline namespace string "
+  "without a prior `project\\(\\)` invocation, with a `VERSION` argument!"
  EXPECT_FAIL
 )
 
@@ -962,8 +979,8 @@ endfunction()
 define_test(
  generate_inline_namespace_with_prior_project_invocation_missing_version_argument_raises_error
  REGEX
-  "Cannot generate an inline namespace string without a prior `project\\(\\)` "
-  "invocation, with a `VERSION` argument!"
+  "generate_inline_namespace: Cannot generate an inline namespace string "
+  "without a prior `project\\(\\)` invocation, with a `VERSION` argument!"
  EXPECT_FAIL
 )
 
@@ -981,7 +998,9 @@ function(generate_guard_symbol_with_empty_destination_variable_raises_error)
 endfunction()
 define_test(
  generate_guard_symbol_with_empty_destination_variable_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "generate_guard_symbol: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -990,7 +1009,9 @@ function(generate_guard_symbol_with_no_abi_breaking_flags_raises_error)
 endfunction()
 define_test(
  generate_guard_symbol_with_no_abi_breaking_flags_raises_error
- REGEX "The 'ABI_BREAKING_FLAGS'... argument must not be empty!"
+ REGEX
+  "generate_guard_symbol: The 'ABI_BREAKING_FLAGS'... argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -1010,7 +1031,7 @@ endfunction()
 define_test(
  generate_guard_symbol_with_invalid_abi_breaking_flags_raises_error
  REGEX
-  "The build flag 'a' does not exist!"
+  "generate_guard_symbol: The build flag 'a' does not exist!"
   EXPECT_FAIL
 )
 
@@ -1041,8 +1062,8 @@ endfunction()
 define_test(
  generate_guard_symbol_with_abi_breaking_flag_with_no_value_raises_error
  REGEX
-  "The flag 'b' does not have a value! All flags must have a value to be used "
-  "in a guard symbol!"
+  "generate_guard_symbol: The flag 'b' does not have a value! All flags must "
+  "have a value to be used in a guard symbol!"
  EXPECT_FAIL
 )
 
