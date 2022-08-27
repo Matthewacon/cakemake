@@ -17,7 +17,9 @@ function(
 endfunction()
 define_test(
  get_project_flags_variable_empty_destination_varaible_argument_raises_error
- REGEX "argument must not be empty!"
+ REGEX
+  "get_project_flags_variable: The <DESTINATION_VARIABLE> argument must not "
+  "be empty!"
  EXPECT_FAIL
 )
 
@@ -43,7 +45,7 @@ function(does_build_flag_exist_invalid_flag_argumnet_raises_error)
 endfunction()
 define_test(
  does_build_flag_exist_invalid_flag_argumnet_raises_error
- REGEX "Flag name cannot be empty!"
+ REGEX "The <FLAG> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -52,7 +54,7 @@ function(does_build_flag_exist_invalid_destination_variable_raises_error)
 endfunction()
 define_test(
  does_build_flag_exist_invalid_destination_variable_raises_error
- REGEX "Destination variable name cannot be empty!"
+ REGEX "The <DESTINATION_VARIABLE> must not be empty!"
  EXPECT_FAIL
 )
 
@@ -78,7 +80,7 @@ function(add_build_flag_invalid_flag_name_raises_error)
 endfunction()
 define_test(
  add_build_flag_invalid_flag_name_raises_error
- REGEX "Flag name cannot be empty!"
+ REGEX "add_build_flag: The <FLAG> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -88,7 +90,7 @@ function(add_build_flag_with_no_value_unsets_flag_value)
  if(DEFINED some_flag)
   message(
    FATAL_ERROR
-   "Expected variable 'some_flag' to be unset!"
+   "add_build_flag: Expected variable 'some_flag' to be unset!"
   )
  endif()
 endfunction()
@@ -188,7 +190,7 @@ function(add_build_flag_adding_the_same_flag_multiple_times_raises_error)
 endfunction()
 define_test(
  add_build_flag_adding_the_same_flag_multiple_times_raises_error
- REGEX "Flag 'some_flag' already exists!"
+ REGEX "add_build_flag: Flag 'some_flag' already exists!"
  EXPECT_FAIL
 )
 
@@ -198,7 +200,7 @@ function(add_fixed_build_flag_invalid_flag_name_raises_error)
 endfunction()
 define_test(
  add_fixed_build_flag_invalid_flag_name_raises_error
- REGEX "Flag name cannot be empty!"
+ REGEX "add_fixed_build_flag: The <FLAG> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -305,7 +307,7 @@ function(
 endfunction()
 define_test(
  add_fixed_build_flag_with_force_option_and_not_cache_named_parameter_raises_error
- REGEX "'FORCE' can only be set alongside 'CACHE'!"
+ REGEX "add_build_flag: 'FORCE' can only be set alongside 'CACHE'!"
  EXPECT_FAIL
 )
 
@@ -337,6 +339,28 @@ define_test(
 )
 
 ##`is_build_flag_configurable` tests
+function(is_build_flag_configurable_with_empty_flag_name_raises_error)
+ is_build_flag_configurable("" "")
+endfunction()
+define_test(
+ is_build_flag_configurable_with_empty_flag_name_raises_error
+ REGEX "is_build_flag_configurable: The <FLAG> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ is_build_flag_configurable_with_empty_destination_variable_name_raises_error
+)
+ is_build_flag_configurable(some_flag "")
+endfunction()
+define_test(
+ is_build_flag_configurable_with_empty_destination_variable_name_raises_error
+ REGEX
+  "is_build_flag_configurable: The <DESTINATION_VARIABLE> argument must not "
+  "be empty!"
+ EXPECT_FAIL
+)
+
 function(is_build_flag_configurable_add_build_flag_yields_true)
  add_build_flag(example_flag)
  is_build_flag_configurable(example_flag is_configurable)
@@ -352,6 +376,16 @@ endfunction()
 define_test(is_build_flag_configurable_add_fixed_build_flag_yields_false)
 
 ##`get_build_flag_list` tests
+function(get_build_flag_list_with_empty_destination_variable_raises_error)
+ get_build_flag_list("")
+endfunction()
+define_test(
+ get_build_flag_list_with_empty_destination_variable_raises_error
+ REGEX
+  "get_build_flag_list: The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
 function(get_build_flag_list_yields_empty_list_when_no_build_flags_are_present)
  get_build_flag_list(flag_list)
  assert_equals("" "${flag_list}")
@@ -375,22 +409,21 @@ define_test(
 )
 
 ##`get_build_flag` tests
-function(get_build_flag_with_invalid_flag_name_raises_error)
+function(get_build_flag_with_empty_flag_name_raises_error)
  get_build_flag("" "")
 endfunction()
 define_test(
- get_build_flag_with_invalid_flag_name_raises_error
- REGEX "Flag name cannot be empty!"
+ get_build_flag_with_empty_flag_name_raises_error
+ REGEX "get_build_flag: The <FLAG> argument must not be empty!"
  EXPECT_FAIL
 )
 
-function(get_build_flag_with_invalid_destination_variable_name_raises_error)
- add_build_flag(some_flag)
+function(get_build_flag_with_empty_destination_variable_name_raises_error)
  get_build_flag(some_flag "")
 endfunction()
 define_test(
- get_build_flag_with_invalid_destination_variable_name_raises_error
- REGEX "Destination variable name cannot be empty!"
+ get_build_flag_with_empty_destination_variable_name_raises_error
+ REGEX "get_build_flag: The <DESTINATION_VARIABLE> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -415,24 +448,24 @@ endfunction()
 define_test(get_build_flag_with_existing_flag_yields_expected_value)
 
 ##`get_build_flag_description` tests
-function(get_build_flag_description_with_invalid_flag_raises_error)
+function(get_build_flag_description_with_empty_flag_raises_error)
  get_build_flag_description("" "")
 endfunction()
 define_test(
- get_build_flag_description_with_invalid_flag_raises_error
- REGEX "Flag name cannot be empty!"
+ get_build_flag_description_with_empty_flag_raises_error
+ REGEX "get_build_flag_description: The <FLAG> argument must not be empty!"
  EXPECT_FAIL
 )
 
 function(
- get_build_flag_description_with_invalid_destination_variable_name_raises_error
+ get_build_flag_description_with_empty_destination_variable_name_raises_error
 )
  add_build_flag(some_flag)
  get_build_flag_description(some_flag "")
 endfunction()
 define_test(
- get_build_flag_description_with_invalid_destination_variable_name_raises_error
- REGEX "Destination variable name cannot be empty!"
+ get_build_flag_description_with_empty_destination_variable_name_raises_error
+ REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -471,13 +504,19 @@ define_test(
  get_build_flag_description_with_existing_flag_yields_expected_value
 )
 
+##TODO `mark_build_flag_as_processed` tests
+
+##TODO `assert_all_build_flags_processed` tests
+
 ##`get_build_flags_pretty` tests
 function(get_build_flags_pretty_invalid_destination_variable_name_raises_error)
  get_build_flags_pretty("")
 endfunction()
 define_test(
  get_build_flags_pretty_invalid_destination_variable_name_raises_error
- REGEX "Destination variable name cannot be empty!"
+ REGEX
+  "get_build_flags_pretty: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 

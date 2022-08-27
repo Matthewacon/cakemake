@@ -4,19 +4,49 @@ include_guard(GLOBAL)
 
 include(${CMAKE_CURRENT_LIST_DIR}/util.cmake)
 
-#[[TODO:
- - Set up global cache variable for prefixing all definitions in this library
- - Add unique name assertions to all function declarations
- - Remove internal `print_help` variants in favour of manual `message`
-   invocations
- - Add help messages to all functions
+#[[TODO
+ Set up global cache variable for prefixing all definitions in this library
 ]]
 
 #[[
  Generates a variable name to store build flags in for the current `project()`
  scope and places it in a destination variable
 ]]
+assert_name_unique(
+ get_project_flags_variable
+ COMMAND
+ "Name collision: Function 'get_project_flags_variable' is already defined "
+ "elsewhere!"
+)
 function(get_project_flags_variable gpfv_DESTINATION_VARIABLE)
+ #Help message
+ string(
+  APPEND gpfv_HELP_MESSAGE
+  "'get_project_flags_variable' takes the following arguments:"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+  "\n\nExamples:"
+  "\n #Notice there is no `project()` invocation"
+  "\n get_project_flags_variable(flags_var)"
+  "\n message(\"\${flags_var}\") #Prints \"NO_PROJECT_BUILD_FLAGS\""
+  "\n ---"
+  "\n project(example)"
+  "\n get_project_flags_variable(flags_var)"
+  "\n message(\"\${flags_var}\") #Prints \"example_BUILD_FLAGS\""
+ )
+
+ #Verify arguments
+ is_empty(gpfv_DESTINATION_VARIABLE_EMPTY "${gpfv_DESTINATION_VARIABLE}")
+ if(gpfv_DESTINATION_VARIABLE_EMPTY)
+  message("${gpfv_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_project_flags_variable: The <DESTINATION_VARIABLE> argument must not "
+   "be empty!"
+  )
+ endif()
+ unset(gpfv_DESTINATION_VARIABLE_EMPTY)
+
  #Get project prefix
  get_project_prefix("${gpfv_DESTINATION_VARIABLE}")
 
@@ -30,30 +60,53 @@ function(get_project_flags_variable gpfv_DESTINATION_VARIABLE)
  )
 endfunction()
 
-#Checks if a flag exists. Places result in desintation variable
+#Checks if a flag exists and places result in desintation variable
+assert_name_unique(
+ does_build_flag_exist
+ COMMAND
+ "Name collision: Function 'does_build_flag_exist' is already defined "
+ "elsewhere!"
+)
 function(does_build_flag_exist dbfe_FLAG dbfe_DESTINATION_VARIABLE)
- #Get build flags list variable name for the current `project()` scope
- get_project_flags_variable(dbfe_BUILD_FLAGS_LIST_VAR)
+ #Help message
+ string(
+  APPEND dbfe_HELP_MESSAGE
+  "'does_build_flag_exist' takes the following arguments:"
+  "\n - (REQUIRED) <FLAG>: The name of the flag"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+  "\n\nExamples:"
+  "\n add_build_flag(some_flag VALUE \"Hello world!\")"
+  "\n does_build_flag_exist(some_flag exists)"
+  "\n message(\"\${exists}\") #Prints \"TRUE\""
+  "\n ---"
+  "\n does_build_flag_exist(another_flag exists)"
+  "\n message(\"\${exists}\") #Prints \"FALSE\""
+ )
 
- #Validate flag name
+ #Validate arguments
  is_empty(dbfe_FLAG_EMPTY "${dbfe_FLAG}")
  if(dbfe_FLAG_EMPTY)
+  message("${dbfe_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "does_build_flag_exist: Flag name cannot be empty!"
+   "does_build_flag_exist: The <FLAG> argument must not be empty!"
   )
  endif()
  unset(dbfe_FLAG_EMPTY)
 
- #Validate destination variable name
  is_empty(dbfe_DESTINATION_VARIABLE_EMPTY "${dbfe_DESTINATION_VARIABLE}")
  if(dbfe_DESTINATION_VARIABLE_EMPTY)
+  message("${dbfe_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "does_build_flag_exist: Destination variable name cannot be empty!"
+   "does_build_flag_exist: The <DESTINATION_VARIABLE> must not be empty!"
   )
  endif()
  unset(dbfe_DESTINATION_VARIABLE_EMPTY)
+
+ #Get build flags list variable name for the current `project()` scope
+ get_project_flags_variable(dbfe_BUILD_FLAGS_LIST_VAR)
 
  #TODO Swap out for IN_LIST
  #Search for flag
@@ -74,16 +127,36 @@ endfunction()
  Add build flag to project build flag list, set up parent scope flag and store
  flag description
 ]]
+assert_name_unique(
+ add_build_flag
+ COMMAND
+ "Name collision: Function 'add_build_flag' is already defined elsewhere!"
+)
 function(add_build_flag abf_FLAG)
- #Get build flags list variable name for the current `project()` scope
- get_project_flags_variable(abf_BUILD_FLAGS_LIST_VAR)
+ #Help message
+ string(
+  APPEND abf_HELP_MESSAGE
+  "'add_build_flag' takes the following arguments:"
+  "\n - (REQUIRED) <FLAG_NAME>: The name of the flag. Must be the first "
+  "argument, always"
+  "\n - (OPTIONAL) 'VALUE': The default value for the flag. If no value is "
+  "specified, then the flag will be unset like so: "
+  "`unset(\${<FLAG_NAME>})`. If multiple values are specified, then they "
+  "will be appended to the variable `\${<FLAG_NAME>}`, as a "
+  "semicolon-separated list"
+  "\n - (OPTIONAL) 'CACHE': Set up flag as a cache variable. Possible "
+  "arguemnts are: [BOOL, FILEPATH, PATH, STRING, INTERNAL]. These values are "
+  "the same as those for the CMake builtin in `set(CACHE <type>)`. For more "
+  "information, see https://cmake.org/cmake/help/v3.19/command/set.html"
+  "\n - (OPTIONAL) 'DESCRIPTION': The description of the flag"
+ )
 
  #Validate flag name
  is_empty(abf_FLAG_EMPTY "${abf_FLAG}")
  if(abf_FLAG_EMPTY)
   message(
    FATAL_ERROR
-   "add_build_flag: Flag name cannot be empty!"
+   "add_build_flag: The <FLAG> argument must not be empty!"
   )
  endif()
  unset(abf_FLAG_EMPTY)
@@ -98,35 +171,8 @@ function(add_build_flag abf_FLAG)
  endif()
  unset(abf_FLAG_EXISTS)
 
- #Help message utility function
- function(abf_print_help abf_ph_LEVEL)
-  #Print help
-  message(
-   "'add_build_flag' takes the following arguments:"
-   "\n - (REQUIRED) <FLAG_NAME>: The name of the flag. Must be the first "
-   "argument, always."
-   "\n - (OPTIONAL) 'VALUE': The default value for the flag. If no value is "
-   "specified, then the flag will be unset like so: "
-   "`unset(\${<FLAG_NAME>})`. If multiple values are specified, then they "
-   "will be appended to the variable `\${<FLAG_NAME>}`, as a "
-   "semicolon-separated list."
-   "\n - (OPTIONAL) 'CACHE': Set up flag as a cache variable. Possible "
-   "arguemnts are: [BOOL, FILEPATH, PATH, STRING, INTERNAL]. These values are "
-   "the same as those for the CMake builtin in `set(CACHE <type>)`. For more "
-   "information, see https://cmake.org/cmake/help/v3.19/command/set.html"
-   "\n - (OPTIONAL) 'DESCRIPTION': The description of the flag."
-   "\n"
-  )
-
-  #Print diagnostic
-  list(LENGTH ARGN abf_ph_DYNAMIC_ARGUMENT_LENGTH)
-  if(abf_ph_DYNAMIC_ARGUMENT_LENGTH GREATER 0)
-   message(${abf_ph_LEVEL} ${ARGN})
-  else()
-   message(${abf_ph_LEVEL} "Illegal arguments supplied to 'add_build_flag'!")
-  endif()
-  unset(abf_ph_DYNAMIC_ARGUMENT_LENGTH)
- endfunction()
+ #Get build flags list variable name for the current `project()` scope
+ get_project_flags_variable(abf_BUILD_FLAGS_LIST_VAR)
 
  #Parse arguments
  cmake_parse_arguments(
@@ -139,7 +185,11 @@ function(add_build_flag abf_FLAG)
 
  #Sanitize arguments
  if(abf_FORCE AND NOT DEFINED abf_CACHE)
-  abf_print_help(FATAL_ERROR "'FORCE' can only be set alongside 'CACHE'!")
+  message("${abf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_build_flag: 'FORCE' can only be set alongside 'CACHE'!"
+  )
  endif()
 
  #Append argument to `project()` scope of build arguments
@@ -187,19 +237,25 @@ function(add_build_flag abf_FLAG)
 endfunction()
 
 #Adds a non-configurable build flag with a fixed value
+assert_name_unique(
+ add_fixed_build_flag
+ COMMAND
+ "Name collision: Function 'add_fixed_build_flag' is already defined "
+ "elsewhere!"
+)
 function(add_fixed_build_flag afbf_FLAG)
- #Get build flags list variable name for the current `project()` scope
- get_project_flags_variable(afbf_BUILD_FLAGS_LIST_VAR)
-
  #Validate flag argument
  is_empty(afbf_FLAG_EMPTY "${afbf_FLAG}")
  if(afbf_FLAG_EMPTY)
   message(
    FATAL_ERROR
-   "add_fixed_build_flag: Flag name cannot be empty!"
+   "add_fixed_build_flag: The <FLAG> argument must not be empty!"
   )
  endif()
  unset(afbf_FLAG_EMPTY)
+
+ #Get build flags list variable name for the current `project()` scope
+ get_project_flags_variable(afbf_BUILD_FLAGS_LIST_VAR)
 
  #Prefix for flag settings
  set(afbf_FLAG_SETTING_PREFIX "${afbf_BUILD_FLAGS_LIST_VAR}_${afbf_FLAG}")
@@ -243,18 +299,32 @@ function(add_fixed_build_flag afbf_FLAG)
  unset(afbf_FLAG_CONFIGURABLE_VARIABLE)
 endfunction()
 
-#Check whether a build flag is configurable. Places result in desination
-#variable.
+#[[
+ Check whether a build flag is configurable. Places result in desination
+ variable
+]]
+assert_name_unique(
+ is_build_flag_configurable
+ COMMAND
+ "Name collision: Function 'is_build_flag_configurable' is already defined "
+ "elsewhere!"
+)
 function(is_build_flag_configurable ibfc_FLAG ibfc_DESTINATION_VARIABLE)
- #Get build flags list variable name for the current `project()` scope
- get_project_flags_variable(ibfc_BUILD_FLAGS_LIST_VAR)
+ string(
+  APPEND ibfc_HELP_MESSAGE
+  "'is_build_flag_configurable' takes the following arguments:"
+  "\n - (REQUIRED) <FLAG>: The name of the flag"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
 
  #Validate flag name
  is_empty(ibfc_FLAG_EMPTY "${ibfc_FLAG}")
  if(ibfc_FLAG_EMPTY)
+  message("${ibfc_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "is_build_flag_configurable: Flag name cannot be empty!"
+   "is_build_flag_configurable: The <FLAG> argument must not be empty!"
   )
  endif()
  unset(ibfc_FLAG_EMPTY)
@@ -262,9 +332,11 @@ function(is_build_flag_configurable ibfc_FLAG ibfc_DESTINATION_VARIABLE)
  #Validate destination variable name
  is_empty(ibfc_DESTINATION_VARIABLE_EMPTY "${ibfc_DESTINATION_VARIABLE}")
  if(ibfc_DESTINATION_VARIABLE_EMPTY)
+  message("${ibfc_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "is_build_flag_configurable: Destination variable name must not be empty!"
+   "is_build_flag_configurable: The <DESTINATION_VARIABLE> argument must not "
+   "be empty!"
   )
  endif()
  unset(ibfc_DESTINATION_VARIABLE_EMPTY)
@@ -272,12 +344,16 @@ function(is_build_flag_configurable ibfc_FLAG ibfc_DESTINATION_VARIABLE)
  #Ensure flag exists
  does_build_flag_exist("${ibfc_FLAG}" ibfc_FLAG_EXISTS)
  if(NOT ibfc_FLAG_EXISTS)
+  message("${ibfc_HELP_MESSAGE}")
   message(
    FATAL_ERROR
    "is_build_flag_configurable: Flag '${ibfc_FLAG}' does not exist!"
   )
  endif()
  unset(ibfc_FLAG_EXISTS)
+
+ #Get build flags list variable name for the current `project()` scope
+ get_project_flags_variable(ibfc_BUILD_FLAGS_LIST_VAR)
 
  #Check if flag is configurable
  set(
@@ -297,19 +373,34 @@ function(is_build_flag_configurable ibfc_FLAG ibfc_DESTINATION_VARIABLE)
 endfunction()
 
 #Get a list of build flags and place it in a destination variable
+assert_name_unique(
+ get_build_flag_list
+ COMMAND
+ "Name collision: Function 'get_build_flag_list' is already defined elsewhere!"
+)
 function(get_build_flag_list gbfl_DESTINATION_VARIABLE)
- #Get build flags list variable name for the current `project()` scope
- get_project_flags_variable(gbfl_BUILD_FLAGS_LIST_VAR)
+ #Help message
+ string(
+  APPEND gbfl_HELP_MESSAGE
+  "'get_build_flag_list' takes the following arguments:"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
 
  #Validate destination variable name
  is_empty(gbfl_DESTINATION_VARIABLE_EMPTY "${gbfl_DESTINATION_VARIABLE}")
  if(gbfl_DESTINATION_VARIABLE_EMPTY)
+  message("${gbfl_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "get_build_flag_list: Destination variable name cannot be empty!"
+   "get_build_flag_list: The <DESTINATION_VARIABLE> argument must not be "
+   "empty!"
   )
  endif()
  unset(gbfl_DESTINATION_VARIABLE_EMPTY)
+
+ #Get build flags list variable name for the current `project()` scope
+ get_project_flags_variable(gbfl_BUILD_FLAGS_LIST_VAR)
 
  #Set destination variable to current build flags list
  set(
@@ -319,7 +410,40 @@ function(get_build_flag_list gbfl_DESTINATION_VARIABLE)
 endfunction()
 
 #Get the value of a specific build flag and place it in a destination variable
+assert_name_unique(
+ get_build_flag
+ COMMAND
+ "Name collision: Function 'get_build_flag' is already defined elsewhere!"
+)
 function(get_build_flag gbf_FLAG gbf_DESTINATION_VARIABLE)
+ #Help message
+ string(
+  APPEND gbf_HELP_MESSAGE
+  "'get_build_flag' takes the following arguments:"
+  "\n - (REQUIRED) <FLAG>: The name of the flag"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
+
+ #Validate flag name
+ is_empty(gbf_FLAG_EMPTY "${gbf_FLAG}")
+ if(gbf_FLAG_EMPTY)
+  message("${gbf_HELP_MESSAGE}")
+  message(FATAL_ERROR "get_build_flag: The <FLAG> argument must not be empty!")
+ endif()
+ unset(gbf_FLAG_EMPTY)
+
+ #Validate destination variable name
+ is_empty(gbf_DESTINATION_VARIABLE_EMPTY "${gbf_DESTINATION_VARIABLE}")
+ if(gbf_DESTINATION_VARIABLE_EMPTY)
+  message("${gbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_build_flag: The <DESTINATION_VARIABLE> argument must not be empty!"
+  )
+ endif()
+ unset(gbf_DESTINATION_VARIABLE_EMPTY)
+
  #Get build flags list variable name for the current `project()` scope
  get_project_flags_variable(gbf_BUILD_FLAGS_LIST_VAR)
 
@@ -335,22 +459,50 @@ function(get_build_flag gbf_FLAG gbf_DESTINATION_VARIABLE)
  endif()
  unset(gbf_FLAG_EXISTS)
 
- #Validate destination variable name
- is_empty(gbf_DESTINATION_VARIABLE_EMPTY "${gbf_DESTINATION_VARIABLE}")
- if(gbf_DESTINATION_VARIABLE_EMPTY)
-  message(
-   FATAL_ERROR
-   "get_build_flag: Destination variable name cannot be empty!"
-  )
- endif()
- unset(gbf_DESTINATION_VARIABLE_EMPTY)
-
  #Set flag value on destination variable name in the parent scope
  set("${gbf_DESTINATION_VARIABLE}" "${${gbf_FLAG}}" PARENT_SCOPE)
 endfunction()
 
 #Get the description of a build flag and place it in a destination variable
+assert_name_unique(
+ get_build_flag_description
+ COMMAND
+ "Name collision: Function 'get_build_flag_description' is already defined "
+ "elsewhere!"
+)
 function(get_build_flag_description gbfd_FLAG gbfd_DESTINATION_VAR)
+ #Help message
+ string(
+  APPEND gbfd_HELP_MESSAGE
+  "'get_build_flag_description' takes the following arguments:"
+  "\n - (REQUIRED) <FLAG>: The name of the flag"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
+
+ #Validate flag name
+ is_empty(gbfd_FLAG_EMPTY "${gbfd_FLAG}")
+ if(gbfd_FLAG_EMPTY)
+  message("${gbfd_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_build_flag_description: The <FLAG> argument must not be empty!"
+  )
+ endif()
+ unset(gbfd_FLAG_EMPTY)
+
+ #Validate destination variable
+ is_empty(gbfd_DESTINATION_VAR_EMPTY "${gbfd_DESTINATION_VAR}")
+ if(gbfd_DESTINATION_VAR_EMPTY)
+  message("${gbfd_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_build_flag_description: The <DESTINATION_VARIABLE> argument must not "
+   "be empty!"
+  )
+ endif()
+ unset(gbfd_DESTINATION_VAR_EMPTY)
+
  #Get build flags list variable name for the current `project()` scope
  get_project_flags_variable(gbfd_BUILD_FLAGS_LIST_VAR)
 
@@ -369,21 +521,67 @@ function(get_build_flag_description gbfd_FLAG gbfd_DESTINATION_VAR)
  unset(gbfd_FLAG_DESCRIPTION_VARIABLE)
 endfunction()
 
-#Assembles a pretty string for the build arguments and place it in a result
-#variable
+#[[
+ TODO Marks a build flag as processed; useful for implementing different
+ compiler backends for a single project
+]]
+assert_name_unique(
+ mark_build_flag_as_processed
+ COMMAND
+ "Name collision: Function 'mark_build_flag_as_processed' is already defined "
+ "elsewhere!"
+)
+function(mark_build_flag_as_processed mbfap_COMPILER mbfap_FLAG)
+ message(FATAL_ERROR "Unimplemented!")
+endfunction()
+
+#[[
+ TODO Checks that all project build flags have been processed and, if not,
+ raises an appropriate diagnostic
+]]
+assert_name_unique(
+ assert_all_build_flags_processed
+ COMMAND
+ "Name collision: Function 'assert_all_build_flags_processed' is already "
+ "defined elsewhere!"
+)
+function(assert_all_build_flags_processed aabfp_COMPILER)
+ message(FATAL_ERROR "Unimplemented!")
+endfunction()
+
+#[[
+ Assembles a pretty string for the build arguments and place it in a result
+ variable
+]]
+assert_name_unique(
+ get_build_flags_pretty
+ COMMAND
+ "Name collision: Function 'get_build_flags_pretty' is already defined "
+ "elsewhere!"
+)
 function(get_build_flags_pretty gbfp_DESTINATION_VARIABLE)
- #Get build flags list variable name for the current `project()` scope
- get_project_flags_variable(gbfp_BUILD_FLAGS_LIST_VAR)
+ #Help message
+ string(
+  APPEND gbfp_HELP_MESSAGE
+  "'get_build_flags_pretty' takes the following arguments:"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
 
  #Validate destination variable name
  is_empty(gbfp_DESTINATION_VARIABLE_EMPTY "${gbfp_DESTINATION_VARIABLE}")
  if(gbfp_DESTINATION_VARIABLE_EMPTY)
+  message("${gbfp_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "get_build_flags_pretty: Destination variable name cannot be empty!"
+   "get_build_flags_pretty: The <DESTINATION_VARIABLE> argument must not be "
+   "empty!"
   )
  endif()
  unset(gbfp_DESTINATION_VARIABLE_EMPTY)
+
+ #Get build flags list variable name for the current `project()` scope
+ get_project_flags_variable(gbfp_BUILD_FLAGS_LIST_VAR)
 
  #Set up flag pretty identifiers
  set(gbfp_MAX_FLAG_LENGTH 0)

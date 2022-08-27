@@ -10,6 +10,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/flags.cmake)
  - Add help messages to all functions
  - Ensure that all relevant functions check that `detect_compiler` was invoked
    beforehand
+ - Custom linker support
 ]]
 
 #[[
@@ -580,6 +581,7 @@ function(remove_compiler_define_formatter rcdf_COMPILER)
  unset("${rcdf_FORMATTER_NAME_VAR}" PARENT_SCOPE)
 endfunction()
 
+#TODO Rename to `add_compiler_define`
 #Add compiler-specific source define for c-preprocessor
 assert_name_unique(
  add_cc_define
@@ -688,6 +690,7 @@ function(add_cc_define acd_ARG acd_VALUE)
  set("${acd_DEFINE_FORMATTED_VAR}" "${acd_FORMATTED_DEFINE}" PARENT_SCOPE)
 endfunction()
 
+#TODO Rename to `get_compiler_defines`
 #[[
  Retrieves the list of cc defines and places it in the destination variable, in
  the parent scope
@@ -727,7 +730,8 @@ function(get_cc_defines gcd_DESTINATION_VARIABLE)
  set("${gcd_DESTINATION_VARIABLE}" "${${gcd_CC_DEFINES_VAR}}" PARENT_SCOPE)
 endfunction()
 
-##Retrieves the value for a given cc define
+#TODO Rename to `get_compiler_define_value`
+#Retrieves the value for a given cc define
 assert_name_unique(
  get_cc_define_value
  COMMAND
@@ -783,7 +787,8 @@ function(get_cc_define_value gcdv_ARG gcdv_DESTINATION_VARIABLE)
  set("${gcdv_DESTINATION_VARIABLE}" "${${gcdv_CC_DEFINE_VAR}}" PARENT_SCOPE)
 endfunction()
 
-##Retrieves the formatted string for a cc define
+#TODO Rename to `get_formatted_compiler_define`
+#Retrieves the formatted string for a cc define
 assert_name_unique(
  get_formatted_cc_define
  COMMAND
@@ -857,8 +862,15 @@ function(get_formatted_cc_define gfcd_ARG gfcd_DESTINATION_VARIABLE)
  )
 endfunction()
 
-#TODO Add compiler or linker flags, segmented by compiler
-# Maybe should be `add_raw_compiler_argument`
+#[[
+ Adds a compiler or linker flag(s) for the given compiler.
+
+ TODO:
+  - Rename to `add_cc_or_ld_arguments`
+  - Use list-of-lists; ie. append all unaccompanied arguments to
+   `${prefix}_${compiler}_[COMPILER, LINKER]_ARGS` and then append that string
+   to a global list, such as `${prefix}_${compiler}_[COMPILER]_ARGS_LISTS`
+]]
 assert_name_unique(
  add_cc_or_ld_argument
  COMMAND
@@ -949,6 +961,10 @@ endfunction()
 #[[
  Retrieves the list of cc and ld arguments and places it in the destination
  variable, in the parent scope
+
+ TODO:
+  - Change to read from global compiler/linkers args lists and return the
+  flattened concatenated result
 ]]
 assert_name_unique(
  get_cc_or_ld_arguments
@@ -1023,6 +1039,28 @@ function(get_cc_or_ld_arguments gcola_TYPE gcola_COMPILER gcola_DESTINATION_VARI
   "${${gcola_LIST_VAR}}"
   PARENT_SCOPE
  )
+endfunction()
+
+#TODO
+assert_name_unique(
+ add_cc_or_ld_arguments_for_build_flag
+ COMMAND
+ "Name collision: Function 'add_cc_or_ld_arguments_for_build_flag' is already "
+ "defined elsewhere!"
+)
+function(add_cc_or_ld_arguments_for_build_flag)
+ message(FATAL_ERROR "Unimplemented!")
+endfunction()
+
+#TODO
+assert_name_unique(
+ get_cc_or_ld_arguments_for_build_flag
+ COMMAND
+ "Name collision: Function 'get_cc_or_ld_arguments_for_build_flag' is already "
+ "defined elsewhere!"
+)
+function(get_cc_or_ld_arguments_for_build_flag)
+ message(FATAL_ERROR "Unimplemented!")
 endfunction()
 
 #[[
@@ -1175,10 +1213,10 @@ function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
  #Generate guard symbol name
  string(
   APPEND ggs_GUARD_SYMBOL
-  "if_you_are_seeing_this_symbol_in_a_linker_related_error_then_you_are_trying_"
-  "to_link_against_another_binary_with_a_differently_configured_build_of_"
-  "${CMAKE_PROJECT_NAME}__this_is_not_allowed_as_some_build_flags_may_break_"
-  "abi_compatibility_between_builds_with_different_configurations__"
+  "if_you_are_seeing_this_symbol_in_a_linker_related_error_then_you_are_"
+  "trying_to_link_against_another_binary_with_a_differently_configured_build_"
+  "of_${CMAKE_PROJECT_NAME}__this_is_not_allowed_as_some_build_flags_may_"
+  "break_abi_compatibility_between_builds_with_different_configurations__"
   "your_configuration_is_as_follows"
  )
  foreach(ggs_FLAG ${ggs_ABI_BREAKING_FLAGS})
