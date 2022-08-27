@@ -225,7 +225,6 @@ assert_name_unique(
  "elsewhere!"
 )
 function(get_detected_compiler gdc_DESTINATION_VARIABLE)
-
  #Help message
  string(
   APPEND gdc_HELP_MESSAGE
@@ -425,9 +424,6 @@ assert_name_unique(
  "elsewhere!"
 )
 function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
- #Compiler details prefix
- get_project_compiler_details_prefix(acdf_COMPILER_DETAILS_PREFIX)
-
  #Help message
  string(
   APPEND acdf_HELP_MESSAGE
@@ -449,7 +445,10 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
  is_empty(acdf_COMPILER_EMPTY "${acdf_COMPILER}")
  if(acdf_COMPILER_EMPTY)
   message("${acdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "add_compiler_define_formatter: The <COMPILER> argument must not be empty!"
+  )
  endif()
  unset(acdf_COMPILER_EMPTY)
 
@@ -457,7 +456,11 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
  is_empty(acdf_FORMATTER_FUNCTION_EMPTY "${acdf_FORMATTER_FUNCTION}")
  if(acdf_FORMATTER_FUNCTION_EMPTY)
   message("${acdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <FORMATTER_FUNCTION> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "add_compiler_define_formatter: The <FORMATTER_FUNCTION> argument must not "
+   "be empty!"
+  )
  endif()
  unset(acdf_FORMATTER_FUNCTION_EMPTY)
 
@@ -465,9 +468,13 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
   message("${acdf_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The formatter function '${acdf_FORMATTER_FUNCTION}' is not defined!"
+   "add_compiler_define_formatter: The formatter function "
+   "'${acdf_FORMATTER_FUNCTION}' is not defined!"
   )
  endif()
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(acdf_COMPILER_DETAILS_PREFIX)
 
  #Ensure define formatter does not already exist
  set(
@@ -483,8 +490,9 @@ function(add_compiler_define_formatter acdf_COMPILER acdf_FORMATTER_FUNCTION)
   message("${acdf_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The compiler '${acdf_COMPILER}' already has a define formatter specified! "
-   "(formatter: '${${acdf_DEFINE_FORMATTER_NAME_VAR}}')"
+   "add_compiler_define_formatter: The compiler '${acdf_COMPILER}' already "
+   "has a define formatter specified! (formatter: "
+   "'${${acdf_DEFINE_FORMATTER_NAME_VAR}}')"
   )
  endif()
 
@@ -517,9 +525,6 @@ assert_name_unique(
  "elsewhere!"
 )
 function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
- #Compiler details prefix
- get_project_compiler_details_prefix(gcdf_COMPILER_DETAILS_PREFIX)
-
  #Help message
  string(
   APPEND gcdf_HELP_MESSAGE
@@ -537,7 +542,10 @@ function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
  is_empty(gcdf_COMPILER_EMPTY "${gcdf_COMPILER}")
  if(gcdf_COMPILER_EMPTY)
   message("${gcdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_compiler_define_formatter: The <COMPILER> argument must not be empty!"
+  )
  endif()
  unset(gcdf_COMPILER_EMPTY)
 
@@ -545,9 +553,16 @@ function(get_compiler_define_formatter gcdf_COMPILER gcdf_DESTINATION_VARIABLE)
  is_empty(gcdf_DESTINATION_VARIABLE_EMPTY "${gcdf_DESTINATION_VARIABLE}")
  if(gcdf_DESTINATION_VARIABLE_EMPTY)
   message("${gcdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_compiler_define_formatter: The <DESTINATION_VARIABLE> argument must "
+   "not be empty!"
+  )
  endif()
  unset(gcdf_DESTINATION_VARIABLE_EMPTY)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcdf_COMPILER_DETAILS_PREFIX)
 
  set(
   gcdf_DEFINE_FORMATTER_NAME_VAR
@@ -571,9 +586,7 @@ assert_name_unique(
  "defined elsewhere!"
 )
 function(remove_compiler_define_formatter rcdf_COMPILER)
- #Compiler details prefix
- get_project_compiler_details_prefix(rcdf_COMPILER_DETAILS_PREFIX)
-
+ #Help message
  string(
   APPEND rcdf_HELP_MESSAGE
   "'remoce_compiler_define_formatter' takes the following arguments:"
@@ -589,9 +602,16 @@ function(remove_compiler_define_formatter rcdf_COMPILER)
  is_empty(rcdf_COMPILER_EMPTY "${rcdf_COMPILER}")
  if(rcdf_COMPILER_EMPTY)
   message("${rcdf_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <COMPILER> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "remove_compiler_define_formatter: The <COMPILER> argument must not be "
+   "empty!"
+  )
  endif()
  unset(rcdf_COMPILER_EMPTY)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(rcdf_COMPILER_DETAILS_PREFIX)
 
  set(rcdf_FORMATTER_LIST_VAR "${rcdf_COMPILER_DETAILS_PREFIX}_FORMATTERS")
  set(
@@ -615,9 +635,6 @@ assert_name_unique(
  "Name collision: Function 'add_cc_define' is already defined elsewhere!"
 )
 function(add_cc_define acd_ARG acd_VALUE)
- #Compiler details prefix
- get_project_compiler_details_prefix(acd_COMPILER_DETAILS_PREFIX)
-
  #Help message
  string(
   APPEND acd_HELP_MESSAGE
@@ -650,9 +667,15 @@ function(add_cc_define acd_ARG acd_VALUE)
  is_empty(acd_ARG_EMPTY "${acd_ARG}")
  if(acd_ARG_EMPTY)
   message("${acd_HELP_MESSAGE}")
-  message("The <DEFINE_NAME> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "add_cc_define: The <DEFINE_NAME> argument must not be empty!"
+  )
  endif()
  unset(acd_ARG_EMPTY)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(acd_COMPILER_DETAILS_PREFIX)
 
  set(acd_DEFINE_LIST_VAR "${acd_COMPILER_DETAILS_PREFIX}_CC_DEFINES")
  set(
@@ -678,9 +701,10 @@ function(add_cc_define acd_ARG acd_VALUE)
   message("${acd_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "Missing formatter for compiler '${acd_DETECTED_COMPILER_ID}'! You must "
-   "specify a define formatter using `add_compiler_define_formatter()` for "
-   "the compiler '${acd_DETECTED_COMPILER_ID}'!"
+   "add_cc_define: Missing formatter for compiler "
+   "'${acd_DETECTED_COMPILER_ID}'! You must specify a define formatter using "
+   "`add_compiler_define_formatter()` for the compiler "
+   "'${acd_DETECTED_COMPILER_ID}'!"
   )
  endif()
  unset(acd_COMPILER_DEFINE_FORMATTER_EMPTY)
@@ -696,8 +720,9 @@ function(add_cc_define acd_ARG acd_VALUE)
   message("${acd_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The define formatter for the compiler '${acd_DETECTED_COMPILER_ID}' did "
-   "not return a value! (function: '${acd_COMPILER_DEFINE_FORMATTER}')"
+   "add_cc_define: The define formatter for the compiler "
+   "'${acd_DETECTED_COMPILER_ID}' did not return a value! (function: "
+   "'${acd_COMPILER_DEFINE_FORMATTER}')"
   )
  endif()
  unset(acd_FORMATTED_DEFINE_EMPTY)

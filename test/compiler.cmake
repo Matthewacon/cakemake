@@ -316,7 +316,8 @@ function(add_compiler_define_formatter_with_empty_compiler_name_raises_erorr)
 endfunction()
 define_test(
  add_compiler_define_formatter_with_empty_compiler_name_raises_erorr
- REGEX "The <COMPILER> argument must not be empty!"
+ REGEX
+  "add_compiler_define_formatter: The <COMPILER> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -327,7 +328,9 @@ function(
 endfunction()
 define_test(
  add_compiler_define_formatter_with_empty_formatter_function_name_raises_error
- REGEX "The <FORMATTER_FUNCTION> argument must not be empty!"
+ REGEX
+  "add_compiler_define_formatter: The <FORMATTER_FUNCTION> argument must not "
+  "be empty!"
  EXPECT_FAIL
 )
 
@@ -338,7 +341,9 @@ function(
 endfunction()
 define_test(
  add_compiler_define_formatter_with_non_existent_formatter_function_raises_error
- REGEX "The formatter function 'some_compiler_formatter' is not defined!"
+ REGEX
+  "add_compiler_define_formatter: The formatter function "
+  "'some_compiler_formatter' is not defined!"
  EXPECT_FAIL
 )
 
@@ -358,8 +363,8 @@ endfunction()
 define_test(
  add_compiler_define_formatter_invoked_for_existing_formatter_raises_error
  REGEX
-  "The compiler 'some_compiler' already has a define formatter specified! "
-  "\\(formatter: 'some_compiler_formatter'\\)"
+  "add_compiler_define_formatter: The compiler 'some_compiler' already has a "
+  "define formatter specified! \\(formatter: 'some_compiler_formatter'\\)"
  EXPECT_FAIL
 )
 
@@ -385,7 +390,8 @@ function(get_compiler_define_formatter_with_empty_compiler_name_raises_error)
 endfunction()
 define_test(
  get_compiler_define_formatter_with_empty_compiler_name_raises_error
- REGEX "The <COMPILER> argument must not be empty!"
+ REGEX
+  "get_compiler_define_formatter: The <COMPILER> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -396,7 +402,9 @@ function(
 endfunction()
 define_test(
  get_compiler_define_formatter_with_empty_destination_variable_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "get_compiler_define_formatter: The <DESTINATION_VARIABLE> argument must "
+  "not be empty!"
  EXPECT_FAIL
 )
 
@@ -438,7 +446,9 @@ function(
 endfunction()
 define_test(
  remove_compiler_define_formatter_with_empty_compiler_name_raises_error
- REGEX "The <COMPILER> argument must not be empty!"
+ REGEX
+  "remove_compiler_define_formatter: The <COMPILER> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -466,7 +476,7 @@ function(add_cc_define_with_empty_define_name_raises_error)
 endfunction()
 define_test(
  add_cc_define_with_empty_define_name_raises_error
- REGEX "The <DEFINE_NAME> argument must not be empty!"
+ REGEX "add_cc_define: The <DEFINE_NAME> argument must not be empty!"
  EXPECT_FAIL
 )
 
@@ -485,9 +495,9 @@ endfunction()
 define_test(
  add_cc_define_with_missing_formatter_for_current_compiler_raises_error
  REGEX
-  "Missing formatter for compiler 'some_compiler'! You must specify a define "
-  "formatter using `add_compiler_define_formatter\\(\\)` for the compiler "
-  "'some_compiler'!"
+  "add_cc_define: Missing formatter for compiler 'some_compiler'! You must "
+  "specify a define formatter using `add_compiler_define_formatter\\(\\)` for "
+  "the compiler 'some_compiler'!"
 )
 
 function(add_cc_define_invokes_the_expected_formatter_when_adding_an_argument)
@@ -528,8 +538,8 @@ endfunction()
 define_test(
  add_cc_define_with_malformed_compiler_define_formatter_raises_error
  REGEX
-  "The define formatter for the compiler 'some_compiler' did not return a "
-  "value! \\(function: 'formatter_2'\\)"
+  "add_cc_define: The define formatter for the compiler 'some_compiler' did "
+  "not return a value! \\(function: 'formatter_2'\\)"
  EXPECT_FAIL
 )
 
@@ -561,7 +571,6 @@ function(add_cc_define_sets_the_expected_variables)
  assert_equals("-Dsome_define=some_value" "${${define_formatted_var}}")
 endfunction()
 define_test(add_cc_define_sets_the_expected_variables)
-
 
 ##`get_cc_defines` tests
 function(get_cc_defines_with_empty_destination_variable_raises_error)
