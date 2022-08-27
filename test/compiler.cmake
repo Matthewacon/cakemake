@@ -17,7 +17,9 @@ function(
 endfunction()
 define_test(
  get_project_compiler_details_prefix_raises_error_for_invalid_destination_variable
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "get_project_compiler_details_prefix: The <DESTINATION_VARIABLE> argument "
+  "must not be empty!"
  EXPECT_FAIL
 )
 
@@ -33,7 +35,48 @@ function(detect_compiler_raises_error_for_invalid_destination_variable)
 endfunction()
 define_test(
  detect_compiler_raises_error_for_invalid_destination_variable
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "detect_compiler: The <DESTINATION_VARIABLE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(detect_compiler_with_no_compiler_id_argument_raises_error)
+ detect_compiler(unused)
+endfunction()
+define_test(
+ detect_compiler_with_no_compiler_id_argument_raises_error
+ REGEX "detect_compiler: The 'COMPILER_ID' argument must be provided!"
+ EXPECT_FAIL
+)
+
+function(detect_compiler_with_unset_compiler_id_variable_raises_error)
+ detect_compiler(
+  unused
+  COMPILER_ID not_set
+ )
+endfunction()
+define_test(
+ detect_compiler_with_unset_compiler_id_variable_raises_error
+ REGEX
+  "detect_compiler: The provided compiler ID variable, 'not_set', is not set! "
+  "Are you sure that you provided the correct compiler ID variable?"
+ EXPECT_FAIL
+)
+
+function(detect_compiler_with_no_supported_compilers_arguments_raises_error)
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+ )
+endfunction()
+define_test(
+ detect_compiler_with_no_supported_compilers_arguments_raises_error
+ REGEX
+  "detect_compiler: At least one compiler must be provided for the "
+  "'SUPPORTED_COMPILERS' argument! See "
+  "https://cmake.org/cmake/help/v3.19/variable/CMAKE_LANG_COMPILER_ID.html "
+  "for more information."
  EXPECT_FAIL
 )
 
@@ -72,8 +115,9 @@ function(define_compiler_raises_error_when_detecting_unsupported_compiler)
 endfunction()
 define_test(
  define_compiler_raises_error_when_detecting_unsupported_compiler
- REGEX "'some_unsupported_compiler' is an unsupported compiler. Supported "
-  "compilers include: "
+ REGEX
+  "detect_compiler: 'some_unsupported_compiler' is an unsupported compiler. "
+  "Supported compilers include: "
   "\n - a"
   "\n - b"
   "\n - c"
@@ -112,7 +156,9 @@ function(
 endfunction()
 define_test(
  get_detected_compiler_with_empty_destination_variable_name_raises_error
- REGEX "The <DESTINATION_VARIABLE> argument must not be empty!"
+ REGEX
+  "get_detected_compiler: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
  EXPECT_FAIL
 )
 
@@ -122,8 +168,8 @@ endfunction()
 define_test(
  get_detected_compiler_without_prior_detect_compiler_invocation_raises_error
  REGEX
-  "The detected compiler ID is not set! You must call `detect_compiler` "
-  "before attempting to retrieve the detected compiler ID!"
+  "get_detected_compiler: The detected compiler ID is not set! You must call "
+  "`detect_compiler` before attempting to retrieve the detected compiler ID!"
  EXPECT_FAIL
 )
 
@@ -141,6 +187,17 @@ endfunction()
 define_test(get_detected_compiler_yields_the_expected_compiler_id)
 
 ##`get_supported_compilers` tests
+function(get_supported_compilers_with_empty_destination_variable_raises_error)
+ get_supported_compilers("")
+endfunction()
+define_test(
+ get_supported_compilers_with_empty_destination_variable_raises_error
+ REGEX
+  "get_supported_compilers: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
 function(get_supported_compilers_yields_empty_string_when_detect_compiler_is_not_invoked)
  get_supported_compilers(supported_compilers)
 
@@ -167,7 +224,26 @@ endfunction()
 define_test(get_supported_compilers_yields_expected_value_after_detect_compilers_invocation)
 
 ##`is_compiler_supported` tests
-#TODO Missing argument validation tests
+function(is_compiler_supported_with_empty_destination_variable_raises_error)
+ is_compiler_supported("" "")
+endfunction()
+define_test(
+ is_compiler_supported_with_empty_destination_variable_raises_error
+ REGEX
+  "is_compiler_supported: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(is_compiler_supported_with_empty_compiler_id_raises_error)
+ is_compiler_supported(unused "")
+endfunction()
+define_test(
+ is_compiler_supported_with_empty_compiler_id_raises_error
+ REGEX "is_compiler_supported: The <COMPILER> argument must not be empty!"
+ EXPECT_FAIL
+)
+
 function(
  is_compiler_supported_raises_error_when_invoked_before_detect_compiler
 )
@@ -176,8 +252,8 @@ endfunction()
 define_test(
  is_compiler_supported_raises_error_when_invoked_before_detect_compiler
  REGEX
-  "The detected compiler ID is not set! You must call `detect_compiler` "
-  "before checking for supported compilers!"
+  "is_compiler_supported: The detected compiler ID is not set! You must call "
+  "`detect_compiler` before checking for supported compilers!"
  EXPECT_FAIL
 )
 

@@ -5,7 +5,8 @@ include_guard(GLOBAL)
 include(${CMAKE_CURRENT_LIST_DIR}/util.cmake)
 
 #[[TODO
- Set up global cache variable for prefixing all definitions in this library
+ - Set up global cache variable for prefixing all definitions in this library
+ - Make all DESTINATION_VARIABLE arguments the first argument
 ]]
 
 #[[

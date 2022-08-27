@@ -11,6 +11,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/flags.cmake)
  - Ensure that all relevant functions check that `detect_compiler` was invoked
    beforehand
  - Custom linker support
+ - Make all DESTINATION_VARIABLE arguments the first argument
 ]]
 
 #[[
@@ -24,6 +25,25 @@ assert_name_unique(
  "defined elsewhere!"
 )
 function(get_project_compiler_details_prefix gpcdp_DESTINATION_VARIABLE)
+ string(
+  APPEND gpcdp_HELP_MESSAGE
+  "'get_project_compiler_details_prefix' takes the following arguments:"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
+
+ #Validate destination variable
+ is_empty(gpcdp_DESTINATION_VARIABLE_EMPTY "${gpcdp_DESTINATION_VARIABLE}")
+ if(gpcdp_DESTINATION_VARIABLE_EMPTY)
+  message("${gpcdp_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_project_compiler_details_prefix: The <DESTINATION_VARIABLE> argument "
+   "must not be empty!"
+  )
+ endif()
+ unset(gpcdp_DESTINATION_VARIABLE_EMPTY)
+
  #Get project prefix
  get_project_prefix("${gpcdp_DESTINATION_VARIABLE}")
 
@@ -48,9 +68,6 @@ assert_name_unique(
  "Name collision: Function 'detect_compiler' is already defined elsewhere!"
 )
 function(detect_compiler dc_DESTINATION_VARIABLE)
- #Get compiler details variable
- get_project_compiler_details_prefix(dc_COMPILER_DETAILS_PREFIX)
-
  #Help message utility function
  string(
   APPEND dc_HELP_MESSAGE
@@ -112,8 +129,9 @@ function(detect_compiler dc_DESTINATION_VARIABLE)
   message("${dc_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "detect_compiler: The provided compiler ID variable, '${dc_COMPILER}', is "
-   "not set! Are you sure that you provided the correct compiler ID variable?"
+   "detect_compiler: The provided compiler ID variable, '${dc_COMPILER_ID}', "
+   "is not set! Are you sure that you provided the correct compiler ID "
+   "variable?"
   )
  endif()
 
@@ -139,6 +157,9 @@ function(detect_compiler dc_DESTINATION_VARIABLE)
    break()
   endif()
  endforeach()
+
+ #Get compiler details variable
+ get_project_compiler_details_prefix(dc_COMPILER_DETAILS_PREFIX)
 
  #[[
   Set the destination variable in the parent scope if `ALLOW_UNSUPPORTED` is
@@ -181,8 +202,8 @@ function(detect_compiler dc_DESTINATION_VARIABLE)
   #Emit diagnostic
   message(
    ${dc_DIAGNOSTIC_LEVEL}
-   "'${${dc_COMPILER_ID}}' is an unsupported compiler. Supported compilers "
-   "include: ${dc_PRETTY_COMPILER_STR}"
+   "detect_compiler: '${${dc_COMPILER_ID}}' is an unsupported compiler. "
+   "Supported compilers include: ${dc_PRETTY_COMPILER_STR}"
   )
   unset(dc_PRETTY_COMPILER_STR)
   unset(dc_DIAGNOSTIC_LEVEL)
@@ -204,8 +225,6 @@ assert_name_unique(
  "elsewhere!"
 )
 function(get_detected_compiler gdc_DESTINATION_VARIABLE)
- #Compiler details prefix
- get_project_compiler_details_prefix(gdc_COMPILER_DETAILS_PREFIX)
 
  #Help message
  string(
@@ -228,9 +247,16 @@ function(get_detected_compiler gdc_DESTINATION_VARIABLE)
  is_empty(gdc_DESTINATION_VARIABLE_EMPTY "${gdc_DESTINATION_VARIABLE}")
  if(gdc_DESTINATION_VARIABLE_EMPTY)
   message("${gdc_HELP_MESSAGE}")
-  message(FATAL_ERROR "The <DESTINATION_VARIABLE> argument must not be empty!")
+  message(
+   FATAL_ERROR
+   "get_detected_compiler: The <DESTINATION_VARIABLE> argument must not be "
+   "empty!"
+  )
  endif()
  unset(gdc_DESTINATION_VARIABLE_EMPTY)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gdc_COMPILER_DETAILS_PREFIX)
 
  #Ensure `detect_compiler` was invoked before
  set(gdc_COMPILER_ID_VAR "${gdc_COMPILER_DETAILS_PREFIX}_DETECTED_COMPILER_ID")
@@ -238,8 +264,8 @@ function(get_detected_compiler gdc_DESTINATION_VARIABLE)
   message("${gdc_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The detected compiler ID is not set! You must call `detect_compiler` "
-   "before attempting to retrieve the detected compiler ID!"
+   "get_detected_compiler: The detected compiler ID is not set! You must call "
+   "`detect_compiler` before attempting to retrieve the detected compiler ID!"
   )
  endif()
 
@@ -258,9 +284,6 @@ assert_name_unique(
  "elsewhere!"
 )
 function(get_supported_compilers gsc_DESTINATION_VARIABLE)
- #Get details prefix
- get_project_compiler_details_prefix(gsc_COMPILER_DETAILS_PREFIX)
-
  #Help message
  string(
   APPEND gsc_HELP_MESSAGE
@@ -290,6 +313,9 @@ function(get_supported_compilers gsc_DESTINATION_VARIABLE)
  endif()
  unset(gsc_DESTINATION_VARIABLE_EMPTY)
 
+ #Get details prefix
+ get_project_compiler_details_prefix(gsc_COMPILER_DETAILS_PREFIX)
+
  #Set supported compilers on destination variable in parent scope
  set(
   "${gsc_DESTINATION_VARIABLE}"
@@ -306,16 +332,13 @@ assert_name_unique(
  "elsewhere!"
 )
 function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
- #Get compiler details prefix
- get_project_compiler_details_prefix(ics_COMPILER_DETAILS_PREFIX)
-
  #Help message
  string(
   APPEND ics_HELP_MESSAGE
   "'is_compiler_supported' takes the following arguments:"
-  "\n - (REQUIRED) <COMPILER_ID>: The name of the compiler to check"
   "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
   "variable, to place the result in"
+  "\n - (REQUIRED) <COMPILER_ID>: The name of the compiler to check"
   "\n\nExample:"
   "\n detect_compiler("
   "\n  MY_DETECTED_COMPILER_ID_RESULT"
@@ -328,28 +351,31 @@ function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
   "\n message(\${Clang_SUPPORTED}) #prints 'FALSE'"
  )
 
- #Validate compiler name
- is_empty(ics_COMPILER_EMPTY "${ics_COMPILER}")
- if(ics_COMPILER_EMPTY)
-  message("${ics_HELP_MESSAGE}")
-  message(
-   FATAL_ERROR
-   "is_compiler_supported: The 'COMPILER' argument must not be empty!"
-  )
- endif()
- unset(ics_COMPILER_EMPTY)
-
  #Validate destination variable name
  is_empty(ics_DESTINATION_VARIABLE_EMPTY "${ics_DESTINATION_VARIABLE}")
  if(ics_DESTINATION_VARIABLE_EMPTY)
   message("${ics_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "is_compiler_supported: The 'DESTINATION_VARIABLE' argument must not be "
+   "is_compiler_supported: The <DESTINATION_VARIABLE> argument must not be "
    "empty!"
   )
  endif()
  unset(ics_DESTINATION_VARIABLE_EMPTY)
+
+ #Validate compiler name
+ is_empty(ics_COMPILER_EMPTY "${ics_COMPILER}")
+ if(ics_COMPILER_EMPTY)
+  message("${ics_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "is_compiler_supported: The <COMPILER> argument must not be empty!"
+  )
+ endif()
+ unset(ics_COMPILER_EMPTY)
+
+ #Get compiler details prefix
+ get_project_compiler_details_prefix(ics_COMPILER_DETAILS_PREFIX)
 
  #Ensure `detect_compiler` was invoked before
  set(ics_COMPILER_ID_VAR "${ics_COMPILER_DETAILS_PREFIX}_DETECTED_COMPILER_ID")
@@ -357,8 +383,8 @@ function(is_compiler_supported ics_DESTINATION_VARIABLE ics_COMPILER)
   message("${ics_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "The detected compiler ID is not set! You must call `detect_compiler` "
-   "before checking for supported compilers!"
+   "is_compiler_supported: The detected compiler ID is not set! You must call "
+   "`detect_compiler` before checking for supported compilers!"
   )
  endif()
 
