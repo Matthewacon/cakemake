@@ -11,6 +11,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/util.cmake)
 #[[
  Generates a variable name to store build flags in for the current `project()`
  scope and places it in a destination variable
+
+ #TODO Rename to 'get_project_flags_details_prefix'
 ]]
 assert_name_unique(
  get_project_flags_variable
@@ -522,8 +524,8 @@ function(get_build_flag_description gbfd_FLAG gbfd_DESTINATION_VAR)
 endfunction()
 
 #[[
- TODO Marks a build flag as processed; useful for implementing different
- compiler backends for a single project
+ Marks a build flag as processed; useful for implementing different compiler
+ backends for a single project
 ]]
 assert_name_unique(
  mark_build_flag_as_processed
@@ -531,13 +533,125 @@ assert_name_unique(
  "Name collision: Function 'mark_build_flag_as_processed' is already defined "
  "elsewhere!"
 )
-function(mark_build_flag_as_processed mbfap_COMPILER mbfap_FLAG)
- message(FATAL_ERROR "Unimplemented!")
+function(mark_build_flag_as_processed mbfap_FLAG)
+ string(
+  APPEND mbfap_HELP_MESSAGE
+  "'mark_build_flag_as_processed' takes the following arguments:"
+  "\n - (REQUIRED) <FLAG>: The name of the flag"
+ )
+
+ #Validate flag name
+ is_empty(mbfap_FLAG_EMPTY "${mbfap_FLAG}")
+ if(mbfap_FLAG_EMPTY)
+  message("${mbfap_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "mark_build_flag_as_processed: The <FLAG> argument must not be empty!"
+  )
+ endif()
+ unset(mbfap_FLAG_EMPTY)
+
+ #Ensure flag exist
+ does_build_flag_exist("${mbfap_FLAG}" mbfap_FLAG_EXISTS)
+ if(NOT mbfap_FLAG_EXISTS)
+  message("${mbfap_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "mark_build_flag_as_processed: The flag '${mbfap_FLAG}' does not exist!"
+  )
+ endif()
+ unset(mbfap_FLAG_EXISTS)
+
+ #Details prefix
+ get_project_flags_variable(mbfap_FLAG_DETAILS_PREFIX)
+
+ #Variable indicating whether `mbfap_FLAG` is processed
+ set(
+  mbfap_FLAG_PROCESSED_VAR
+  "${mbfap_FLAG_DETAILS_PREFIX}_${mbfap_FLAG}_PROCESSED"
+ )
+
+ #Set flag as processed
+ set("${mbfap_FLAG_PROCESSED_VAR}" TRUE PARENT_SCOPE)
 endfunction()
 
 #[[
- TODO Checks that all project build flags have been processed and, if not,
- raises an appropriate diagnostic
+ Checks whether or not a given flag has been processed and sets the destination
+ variable, in the parent scope
+]]
+assert_name_unique(
+ is_build_flag_processed
+ COMMAND
+ "Name collision: Function 'is_build_flag_processed' is already defined "
+ "elsewhere!"
+)
+function(is_build_flag_processed ibfp_FLAG ibfp_DESTINATION_VARIABLE)
+ string(
+  APPEND ibfp_HELP_MESSAGE
+  "'is_build_flag_processed' takes the following arguments:"
+  "\n - (REQUIRED) <FLAG>: The name of the flag"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
+
+ #Validate flag argument
+ is_empty(ibfp_FLAG_EMPTY "${ibfp_FLAG}")
+ if(ibfp_FLAG_EMPTY)
+  message("${ibfp_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "is_build_flag_processed: The <FLAG> argument must not be empty!"
+  )
+ endif()
+ unset(ibfp_FLAG_EMPTY)
+
+ #Validate destination variable
+ is_empty(ibfp_DESTINATION_VARIABLE_EMPTY "${ibfp_DESTINATION_VARIABLE}")
+ if(ibfp_DESTINATION_VARIABLE_EMPTY)
+  message("${ibfp_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "is_build_flag_processed: The <DESTINATION_VARIABLE> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(ibfp_DESTINATION_VARIABLE_EMPTY)
+
+ #Ensure build flag exists
+ does_build_flag_exist("${ibfp_FLAG}" ibfp_FLAG_EXISTS)
+ if(NOT ibfp_FLAG_EXISTS)
+  message("${ibfp_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "is_build_flag_processed: The flag '${ibfp_FLAG}' does not exist!"
+  )
+ endif()
+ unset(ibfp_FLAG_EXISTS)
+
+ #Flag details prefix
+ get_project_flags_variable(ibfp_FLAG_DETAILS_PREFIX)
+ set(
+  ibfp_FLAG_PROCESSED_VAR
+  "${ibfp_FLAG_DETAILS_PREFIX}_${ibfp_FLAG}_PROCESSED"
+ )
+ if(DEFINED "${ibfp_FLAG_PROCESSED_VAR}")
+  set(ibfp_FLAG_PROCESSED TRUE)
+ else()
+  set(ibfp_FLAG_PROCESSED FALSE)
+ endif()
+ unset(ibfp_FLAG_PROCESSED_VAR)
+
+ #Set result on destination variable in parent scope
+ set(
+  "${ibfp_DESTINATION_VARIABLE}"
+  "${ibfp_FLAG_PROCESSED}"
+  PARENT_SCOPE
+ )
+endfunction()
+
+#[[
+ Checks that all project build flags have been processed and, if not, raises
+ an appropriate diagnostic
 ]]
 assert_name_unique(
  assert_all_build_flags_processed
@@ -545,8 +659,18 @@ assert_name_unique(
  "Name collision: Function 'assert_all_build_flags_processed' is already "
  "defined elsewhere!"
 )
-function(assert_all_build_flags_processed aabfp_COMPILER)
- message(FATAL_ERROR "Unimplemented!")
+function(assert_all_build_flags_processed)
+ get_build_flag_list(aabfp_FLAGS)
+ foreach(aabfp_FLAG ${aabfp_FLAGS})
+  is_build_flag_processed("${aabfp_FLAG}" aabfp_FLAG_PROCESSED)
+  if(NOT aabfp_FLAG_PROCESSED)
+   message(
+    FATAL_ERROR
+    "assert_all_build_flags_processed: Flag '${aabfp_FLAG}' has not been "
+    "processed!"
+   )
+  endif()
+ endforeach()
 endfunction()
 
 #[[

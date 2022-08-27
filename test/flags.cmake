@@ -504,9 +504,124 @@ define_test(
  get_build_flag_description_with_existing_flag_yields_expected_value
 )
 
-##TODO `mark_build_flag_as_processed` tests
+##`mark_build_flag_as_processed` tests
+function(mark_build_flag_as_processed_with_empty_flag_name_raises_error)
+ mark_build_flag_as_processed("")
+endfunction()
+define_test(
+ mark_build_flag_as_processed_with_empty_flag_name_raises_error
+ REGEX "mark_build_flag_as_processed: The <FLAG> argument must not be empty!"
+ EXPECT_FAIL
+)
 
-##TODO `assert_all_build_flags_processed` tests
+function(mark_build_flag_as_processed_with_non_existent_flag_raises_error)
+ mark_build_flag_as_processed(NONE)
+endfunction()
+define_test(
+ mark_build_flag_as_processed_with_non_existent_flag_raises_error
+ REGEX "mark_build_flag_as_processed: The flag 'NONE' does not exist!"
+)
+
+function(
+ mark_build_flag_as_processed_with_existing_flag_sets_expected_variable
+)
+ get_project_flags_variable(prefix)
+ set(processed_var "${prefix}_example_flag_PROCESSED")
+ add_build_flag(example_flag)
+
+ mark_build_flag_as_processed(example_flag)
+
+ if(NOT DEFINED "${processed_var}")
+  message(FATAL_ERROR "Expected variable not set: '${processed_var}'")
+ endif()
+ assert_true("${${processed_var}}")
+endfunction()
+define_test(
+ mark_build_flag_as_processed_with_existing_flag_sets_expected_variable
+)
+
+##`is_build_flag_processed` tests
+function(is_build_flag_processed_with_empty_flag_name_raises_error)
+ is_build_flag_processed("" "")
+endfunction()
+define_test(
+ is_build_flag_processed_with_empty_flag_name_raises_error
+ REGEX "is_build_flag_processed: The <FLAG> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ is_build_flag_processed_with_empty_destination_variable_name_raises_error
+)
+ is_build_flag_processed(some_flag "")
+endfunction()
+define_test(
+ is_build_flag_processed_with_empty_destination_variable_name_raises_error
+ REGEX
+  "is_build_flag_processed: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(is_build_flag_processed_with_non_existent_flag_raises_error)
+ is_build_flag_processed(some_flag unused)
+endfunction()
+define_test(
+ is_build_flag_processed_with_non_existent_flag_raises_error
+ REGEX "is_build_flag_processed: The flag 'some_flag' does not exist!"
+)
+
+function(is_build_flag_processed_with_unprocessed_flag_yields_false)
+ add_build_flag(some_flag)
+ is_build_flag_processed(some_flag processed)
+ assert_false("${processed}")
+endfunction()
+define_test(is_build_flag_processed_with_unprocessed_flag_yields_false)
+
+function(is_build_flag_processed_with_prcessed_flag_yields_true)
+ add_build_flag(some_flag)
+ mark_build_flag_as_processed(some_flag)
+ is_build_flag_processed(some_flag processed)
+ assert_true("${processed}")
+endfunction()
+define_test(is_build_flag_processed_with_prcessed_flag_yields_true)
+
+##`assert_all_build_flags_processed` tests
+function(
+ assert_all_build_flags_processed_with_no_build_flags_does_not_raise_error
+)
+ assert_all_build_flags_processed()
+endfunction()
+define_test(
+ assert_all_build_flags_processed_with_no_build_flags_does_not_raise_error
+)
+
+function(
+ assert_all_build_flags_processed_with_unprocessed_build_flags_raises_error
+)
+ add_build_flag(example_flag)
+ assert_all_build_flags_processed()
+endfunction()
+define_test(
+ assert_all_build_flags_processed_with_unprocessed_build_flags_raises_error
+ REGEX
+  "assert_all_build_flags_processed: Flag 'example_flag' has not been "
+  "processed!"
+ EXPECT_FAIL
+)
+
+function(
+ assert_all_build_flags_processed_with_processed_flags_does_not_raise_error
+)
+ add_build_flag(flag1)
+ add_build_flag(flag2)
+ mark_build_flag_as_processed(flag1)
+ mark_build_flag_as_processed(flag2)
+ assert_all_build_flags_processed()
+endfunction()
+define_test(
+ assert_all_build_flags_processed_with_processed_flags_does_not_raise_error
+)
 
 ##`get_build_flags_pretty` tests
 function(get_build_flags_pretty_invalid_destination_variable_name_raises_error)
