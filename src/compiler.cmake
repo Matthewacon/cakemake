@@ -940,31 +940,22 @@ endfunction()
 
 #[[
  Adds a compiler or linker flag(s) for the given compiler.
-
- TODO:
-  - Rename to `add_cc_or_ld_arguments`
-  - Use list-of-lists; ie. append all unaccompanied arguments to
-   `${prefix}_${compiler}_[COMPILER, LINKER]_ARGS` and then append that string
-   to a global list, such as `${prefix}_${compiler}_[COMPILER]_ARGS_LISTS`
-  - Remove `<COMPILER>` argument; will always be invoked in the context of the
-    current compiler
 ]]
 assert_name_unique(
- add_cc_or_ld_argument
+ add_cc_or_ld_arguments
  COMMAND
- "Name collision: Function 'add_cc_or_ld_argument' is already defined "
+ "Name collision: Function 'add_cc_or_ld_arguments' is already defined "
  "elsewhere!"
 )
-function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
+function(add_cc_or_ld_arguments acola_TYPE)
  #Help message
  string(
   APPEND acola_HELP_MESSAGE
-  "'add_cc_or_ld_argument' takes the following arguments:"
+  "'add_cc_or_ld_arguments' takes the following arguments:"
   "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
-  "\n - (REQUIRED) <COMPILER>: The ID of the compiler for the given flag"
-  "\n - (REQURIED) 'FLAGS'...: The flag(s)"
+  "\n - (REQURIED) 'ARGUMENTS'...: The flag(s)"
   "\n\nExample:"
-  "\n add_cc_or_ld_argument(COMPILER GNU \"-fsanitize=address\")"
+  "\n add_cc_or_ld_arguments(COMPILER GNU \"-fsanitize=address\")"
  )
 
  #Validate arguments
@@ -973,52 +964,39 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
   message("${acola_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "add_cc_or_ld_argument: The <TYPE> argument must not be empty!"
+   "add_cc_or_ld_arguments: The <TYPE> argument must not be empty!"
   )
  endif()
  unset(acola_TYPE_EMPTY)
-
- is_empty(acola_COMPILER_EMPTY "${acola_COMPILER}")
- if(acola_COMPILER_EMPTY)
-  message("${acola_HELP_MESSAGE}")
-  message(
-   FATAL_ERROR
-   "add_cc_or_ld_argument: The <COMPILER> argument must not be empty!"
-  )
- endif()
- unset(acola_COMPILER_EMPTY)
-
- set(acola_FLAGS "${ARGN}")
- is_empty(acola_FLAGS_EMPTY "${acola_FLAGS}")
- if(acola_FLAGS_EMPTY)
-  message("${acola_HELP_MESSAGE}")
-  message(
-   FATAL_ERROR
-   "add_cc_or_ld_argument: The 'FLAGS'... argument must not be empty!"
-  )
- endif()
- unset(acola_FLAGS_EMPTY)
 
  list(APPEND acola_VALID_TYPES COMPILER LINKER)
  if(NOT acola_TYPE IN_LIST acola_VALID_TYPES)
   message("${acola_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "add_cc_or_ld_argument: The type '${acola_TYPE}' is not a valid option! "
+   "add_cc_or_ld_arguments: The type '${acola_TYPE}' is not a valid option! "
    "Must be one of: [COMPILER, LINKER]."
   )
  endif()
  unset(acola_VALID_TYPES)
 
- is_compiler_supported(acola_COMPILER_SUPPORTED "${acola_COMPILER}")
- if(NOT acola_COMPILER_SUPPORTED)
+ cmake_parse_arguments(
+  acola
+  ""
+  ""
+  "ARGUMENTS"
+  ${ARGN}
+ )
+
+ is_empty(acola_ARGUMENTS_EMPTY "${acola_ARGUMENTS}")
+ if(acola_ARGUMENTS_EMPTY)
   message("${acola_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "add_cc_or_ld_argument: Compiler '${acola_COMPILER}' is not supported!"
+   "add_cc_or_ld_arguments: The 'ARGUMENTS'... argument must not be empty!"
   )
  endif()
- unset(acola_COMPILER_SUPPORTED)
+ unset(acola_ARGUMENTS_EMPTY)
 
  #Compiler details prefix
  get_project_compiler_details_prefix(acola_COMPILER_DETAILS_PREFIX)
@@ -1027,21 +1005,15 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
  if(acola_TYPE STREQUAL "COMPILER")
   set(
    acola_SUPER_LIST_VAR
-   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_COMPILER_ARGS_LISTS"
+   "${acola_COMPILER_DETAILS_PREFIX}_COMPILER_ARGS_LISTS"
   )
-  set(
-   acola_DEST_VAR
-   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_UNPAIRED_COMPILER_ARGS"
-  )
+  set(acola_DEST_VAR "${acola_COMPILER_DETAILS_PREFIX}_UNPAIRED_COMPILER_ARGS")
  elseif(acola_TYPE STREQUAL "LINKER")
   set(
    acola_SUPER_LIST_VAR
-   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_LINKER_ARGS_LISTS"
+   "${acola_COMPILER_DETAILS_PREFIX}_LINKER_ARGS_LISTS"
   )
-  set(
-   acola_DEST_VAR
-   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_UNPAIRED_LINKER_ARGS"
-  )
+  set(acola_DEST_VAR "${acola_COMPILER_DETAILS_PREFIX}_UNPAIRED_LINKER_ARGS")
  endif()
 
  #Append dest var arg list to compiler/linker args super list
@@ -1060,7 +1032,7 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
  #Append to compiler/linker args in parent scope
  list(
   APPEND "${acola_DEST_VAR}"
-  "${acola_FLAGS}"
+  "${acola_ARGUMENTS}"
  )
  set(
   "${acola_DEST_VAR}"
@@ -1072,12 +1044,6 @@ endfunction()
 #[[
  Retrieves the list of cc and ld arguments and places it in the destination
  variable, in the parent scope
-
- TODO:
-  - Change to read from global compiler/linkers args lists and return the
-  flattened concatenated result
-  - Remove `<COMPILER>` argument; will always be invoked in the context of the
-    current compiler
 ]]
 assert_name_unique(
  get_cc_or_ld_arguments
@@ -1087,7 +1053,6 @@ assert_name_unique(
 )
 function(get_cc_or_ld_arguments
  gcola_TYPE
- gcola_COMPILER
  gcola_DESTINATION_VARIABLE
 )
  #Help message
@@ -1095,8 +1060,6 @@ function(get_cc_or_ld_arguments
   APPEND gcola_HELP_MESSAGE
   "'get_cc_or_ld_argument' takes the following arguments:"
   "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
-  "\n - (REQUIRED) <COMPILER>: The ID of the compiler to retrieve arguments "
-  "for"
   "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
   "variable to place the result in, in the parent scope"
  )
@@ -1112,15 +1075,16 @@ function(get_cc_or_ld_arguments
  endif()
  unset(gcola_TYPE_EMPTY)
 
- is_empty(gcola_COMPILER_EMPTY "${gcola_COMPILER}")
- if(gcola_COMPILER_EMPTY)
+ list(APPEND gcola_ALLOWED_TYPES COMPILER LINKER)
+ if(NOT gcola_TYPE IN_LIST gcola_ALLOWED_TYPES)
   message("${gcola_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "get_cc_or_ld_arguments: The <COMPILER> argument must not be empty!"
+   "get_cc_or_ld_arguments: The type '${gcola_TYPE}' is not a valid option! "
+   "Must be one of: [COMPILER, LINKER]."
   )
  endif()
- unset(gcola_COMPILER_EMPTY)
+ unset(gcola_ALLOWED_TYPES)
 
  is_empty(gcola_DESTINATION_VARIABLE_EMPTY "${gcola_DESTINATION_VARIABLE}")
  if(gcola_DESTINATION_VARIABLE_EMPTY)
@@ -1133,17 +1097,6 @@ function(get_cc_or_ld_arguments
  endif()
  unset(gcola_DESTINATION_VARIABLE_EMPTY)
 
- list(APPEND gcola_ALLOWED_TYPES COMPILER LINKER)
- if(NOT gcola_TYPE IN_LIST gcola_ALLOWED_TYPES)
-  message("${gcola_HELP_MESSAGE}")
-  message(
-   FATAL_ERROR
-   "get_cc_or_ld_arguments: The type '${gcola_TYPE}' is not a valid option! "
-   "Must be one of: [COMPILER, LINKER]."
-  )
- endif()
- unset(gcola_ALLOWED_TYPES)
-
  #Compiler details prefix
  get_project_compiler_details_prefix(gcola_COMPILER_DETAILS_PREFIX)
 
@@ -1151,12 +1104,12 @@ function(get_cc_or_ld_arguments
  if(gcola_TYPE STREQUAL "COMPILER")
   set(
    gcola_ARGS_LISTS_VAR
-   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_COMPILER_ARGS_LISTS"
+   "${gcola_COMPILER_DETAILS_PREFIX}_COMPILER_ARGS_LISTS"
   )
  elseif(gcola_TYPE STREQUAL "LINKER")
   set(
    gcola_ARGS_LISTS_VAR
-   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_LINKER_ARGS_LISTS"
+   "${gcola_COMPILER_DETAILS_PREFIX}_LINKER_ARGS_LISTS"
   )
  endif()
 
@@ -1176,7 +1129,60 @@ function(get_cc_or_ld_arguments
  )
 endfunction()
 
-#TODO
+#[[
+ Adds compiler or linker arguments associated with a build flag, so that
+ support for a given build flag can be asserted; ie.
+
+ ```cmake
+ #Detect current project compiler
+ detect_compiler(
+  detected_compiler_name
+  COMPILER_ID CMAKE_CXX_COMPILER_ID
+  SUPPORTED_COMPILER Clang GNU AnotherCompiler
+ )
+
+ #Add project feature flag
+ add_build_flag(
+  example_flag
+  DESCRIPTION "This build flag required compiler-dependent arguments"
+ )
+
+ #Implement compiler-specific flags to support the 'example_flag' feature flag
+ if(detected_compiler_name STREQUAL "Clang")
+  #Clang support
+  add_cc_or_ld_arguments_for_build_flag(
+   COMPILER
+   example_flag
+   ARGUMENTS
+    -O3
+    -g
+  )
+  mark_build_flag_as_processed(example_flag)
+ elseif(detected_compiler STREQUAL "GNU")
+  add_cc_or_ld_arguments_for_build_flag(
+   COMPILER
+   example_flag
+   ARGUMENTS
+    -O0
+    -g
+  )
+  mark_build_flag_as_processed(example_flag)
+ endif()
+
+ #Ensure we have implemented support for all feature flags on the current
+ #compiler.
+ #
+ #Note: Will raise an error when a user tries to build this project with the
+ #'AnotherCompiler' compiler, since we did not implement the 'example_flag'
+ #feature flag for that compiler!
+ assert_all_build_flags_processed()
+
+ #When compiler is 'Clang', prints '-O3;-g'; when compiler is 'GNU', prints
+ #'-O0;-g'
+ get_cc_or_ld_arguments_for_build_flag(COMPILER example_flag args)
+ message("${args}")
+ ```
+]]
 assert_name_unique(
  add_cc_or_ld_arguments_for_build_flag
  COMMAND
@@ -1185,13 +1191,16 @@ assert_name_unique(
 )
 function(add_cc_or_ld_arguments_for_build_flag
  acolafbf_TYPE
- acolafbf_COMPILER
  acolafbf_FLAG
 )
- #TODO Help message
+ #Help message
  string(
   APPEND acolafbf_HELP_MESSAGE
-  "TODO"
+  "'add_cc_or_ld_arguments_for_build_flag' takes the following arguments:"
+  "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
+  "\n - (REQUIRED) <FLAG>: The name of the flag to associate the following "
+  "arguments with"
+  "\n - (REQUIRED) 'ARGUMENTS'...: The list of arguments; must not be empty"
  )
 
  #Validate arguments
@@ -1206,16 +1215,16 @@ function(add_cc_or_ld_arguments_for_build_flag
  endif()
  unset(acolafbf_TYPE_EMPTY)
 
- is_empty(acolafbf_COMPILER_EMPTY "${acolafbf_COMPILER}")
- if(acolafbf_COMPILER_EMPTY)
+ list(APPEND acolafbf_VALID_TYPES COMPILER LINKER)
+ if(NOT acolafbf_TYPE IN_LIST acolafbf_VALID_TYPES)
   message("${acolafbf_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "add_cc_or_ld_arguments_for_build_flag: The <COMPILER> argument must not "
-   "be empty!"
+   "add_cc_or_ld_arguments_for_build_flag: The type '${acolafbf_TYPE}' is not "
+   "a valid option! Must be one of: [COMPILER, LINKER]."
   )
  endif()
- unset(acolafbf_COMPILER_EMPTY)
+ unset(acolafbf_VALID_TYPES)
 
  is_empty(acolafbf_FLAG_EMPTY "${acolafbf_FLAG}")
  if(acolafbf_FLAG_EMPTY)
@@ -1228,15 +1237,35 @@ function(add_cc_or_ld_arguments_for_build_flag
  endif()
  unset(acolafbf_FLAG_EMPTY)
 
- is_compiler_supported(acolafbf_COMPILER_SUPPORTED "${acolafbf_COMPILER}")
- if(NOT acolafbf_COMPILER_SUPPORTED)
+ does_build_flag_exist("${acolafbf_FLAG}" acolafbf_FLAG_EXISTS)
+ if(NOT acolafbf_FLAG_EXISTS)
   message("${acolafbf_HELP_MESSAGE}")
   message(
    FATAL_ERROR
-   "add_cc_or_ld_arguments_for_build_flag: Compiler '${acolafbf_COMPILER}' is "
-   "not supported!"
+   "add_cc_or_ld_arguments_for_build_flag: The build flag '${acolafbf_FLAG}' "
+   "does not exist!"
   )
  endif()
+ unset(acolafbf_FLAG_EXISTS)
+
+ cmake_parse_arguments(
+  acolafbf
+  ""
+  ""
+  "ARGUMENTS"
+  ${ARGN}
+ )
+
+ is_empty(acolafbf_ARGUMENTS_EMPTY "${acolafbf_ARGUMENTS}")
+ if(acolafbf_ARGUMENTS_EMPTY)
+  message("${acolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_arguments_for_build_flag: The 'ARGUMENTS'... argument must "
+   "not be empty!"
+  )
+ endif()
+ unset(acolafbf_ARGUMENTS_EMPTY)
 
  #Compiler details prefix
  get_project_compiler_details_prefix(acolafbf_COMPILER_DETAILS_PREFIX)
@@ -1245,24 +1274,20 @@ function(add_cc_or_ld_arguments_for_build_flag
  if(acolafbf_TYPE STREQUAL "COMPILER")
   string(
    APPEND acolafbf_SUPER_LIST_VAR
-   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_COMPILER_ARGS_"
-   "LISTS"
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_COMPILER_ARGS_LISTS"
   )
   string(
    APPEND acolafbf_DEST_VAR
-   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_${acolafbf_FLAG}_"
-   "FLAG_COMPILER_ARGS"
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_FLAG}_FLAG_COMPILER_ARGS"
   )
  elseif(acolafbf_TYPE STREQUAL "LINKER")
   string(
    APPEND acolafbf_SUPER_LIST_VAR
-   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_LINKER_ARGS_"
-   "LISTS"
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_LINKER_ARGS_LISTS"
   )
   string(
    APPEND acolafbf_DEST_VAR
-   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_${acolafbf_FLAG}_"
-   "FLAG_LINKER_ARGS"
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_FLAG}_FLAG_LINKER_ARGS"
   )
  endif()
 
@@ -1282,7 +1307,7 @@ function(add_cc_or_ld_arguments_for_build_flag
  #Append to compiler/linker flag args in parent scope
  list(
   APPEND "${acolafbf_DEST_VAR}"
-  "${acolafbf_FLAGS}"
+  "${acolafbf_ARGUMENTS}"
  )
  set(
   "${acolafbf_DEST_VAR}"

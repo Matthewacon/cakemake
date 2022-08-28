@@ -736,165 +736,95 @@ function(get_formatted_compiler_define_yields_the_expected_value)
 endfunction()
 define_test(get_formatted_compiler_define_yields_the_expected_value)
 
-##`add_cc_or_ld_argument` tests
-function(add_cc_or_ld_argument_with_empty_type_raises_error)
- add_cc_or_ld_argument("" "" "")
+##`add_cc_or_ld_arguments` tests
+function(add_cc_or_ld_arguments_with_empty_type_raises_error)
+ add_cc_or_ld_arguments("" "")
 endfunction()
 define_test(
- add_cc_or_ld_argument_with_empty_type_raises_error
- REGEX "add_cc_or_ld_argument: The <TYPE> argument must not be empty!"
+ add_cc_or_ld_arguments_with_empty_type_raises_error
+ REGEX "add_cc_or_ld_arguments: The <TYPE> argument must not be empty!"
  EXPECT_FAIL
 )
 
-function(add_cc_or_ld_argument_with_empty_compiler_id_raises_error)
- add_cc_or_ld_argument(COMPILER "" "")
+function(add_cc_or_ld_arguments_with_invalid_type_raises_error)
+ add_cc_or_ld_arguments(INVALID_TYPE)
 endfunction()
 define_test(
- add_cc_or_ld_argument_with_empty_compiler_id_raises_error
- REGEX "add_cc_or_ld_argument: The <COMPILER> argument must not be empty!"
- EXPECT_FAIL
-)
-
-function(add_cc_or_ld_argument_with_emtpy_flag_raises_error)
- add_cc_or_ld_argument(LINKER some_compiler_id "")
-endfunction()
-define_test(
- add_cc_or_ld_argument_with_emtpy_flag_raises_error
- REGEX "add_cc_or_ld_argument: The 'FLAGS'... argument must not be empty!"
- EXPECT_FAIL
-)
-
-function(add_cc_or_ld_argument_with_invalid_type_raises_error)
- add_cc_or_ld_argument(INVALID_TYPE some_compiler_id abc)
-endfunction()
-define_test(
- add_cc_or_ld_argument_with_invalid_type_raises_error
+ add_cc_or_ld_arguments_with_invalid_type_raises_error
  REGEX
-  "add_cc_or_ld_argument: The type 'INVALID_TYPE' is not a valid option! Must "
-  "be one of: \[COMPILER, LINKER\]"
+  "add_cc_or_ld_arguments: The type 'INVALID_TYPE' is not a valid option! "
+  "Must be one of: \[COMPILER, LINKER\]"
  EXPECT_FAIL
 )
 
-function(add_cc_or_ld_argument_with_invalid_compiler_id_variable_raises_error)
- set(stub stub)
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
-
- add_cc_or_ld_argument(COMPILER some_unsupported_compiler asd)
+function(add_cc_or_ld_arguments_with_empty_arguments_variable_raises_error)
+ add_cc_or_ld_arguments(LINKER)
 endfunction()
 define_test(
- add_cc_or_ld_argument_with_invalid_compiler_id_variable_raises_error
- REGEX
-  "add_cc_or_ld_argument: Compiler 'some_unsupported_compiler' is not "
-  "supported!"
+ add_cc_or_ld_arguments_with_empty_arguments_variable_raises_error
+ REGEX "add_cc_or_ld_arguments: The 'ARGUMENTS'... argument must not be empty!"
  EXPECT_FAIL
 )
 
-function(
- add_cc_or_ld_argument_with_invalid_compiler_when_allow_unsupported_is_specified_does_not_yield_error
-)
- set(stub stub)
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
-  ALLOW_UNSUPPORTED
- )
-
- add_cc_or_ld_argument(COMPILER some_unsupported_compiler asd)
-endfunction()
-define_test(
- add_cc_or_ld_argument_with_invalid_compiler_when_allow_unsupported_is_specified_does_not_yield_error
-)
-
-function(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
+function(add_cc_or_ld_arguments_sets_expected_variable_for_compiler_argument)
  get_project_compiler_details_prefix(prefix)
 
- set(stub stub)
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
+ add_cc_or_ld_arguments(COMPILER ARGUMENTS "-Dsome=value")
+ add_cc_or_ld_arguments(COMPILER ARGUMENTS "--hello_world")
 
- add_cc_or_ld_argument(COMPILER stub "-Dsome=value")
- add_cc_or_ld_argument(COMPILER stub "--hello_world")
-
- set(compiler_arg_list_var "${prefix}_stub_UNPAIRED_COMPILER_ARGS")
+ set(compiler_arg_list_var "${prefix}_UNPAIRED_COMPILER_ARGS")
  assert_equals("-Dsome=value;--hello_world" "${${compiler_arg_list_var}}")
- set(super_arg_list_var "${prefix}_stub_COMPILER_ARGS_LISTS")
+ set(super_arg_list_var "${prefix}_COMPILER_ARGS_LISTS")
  assert_equals("${compiler_arg_list_var}" "${${super_arg_list_var}}")
 endfunction()
-define_test(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
+define_test(
+ add_cc_or_ld_arguments_sets_expected_variable_for_compiler_argument
+)
 
-function(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
+function(add_cc_or_ld_arguments_sets_expected_variable_for_linker_argument)
  get_project_compiler_details_prefix(prefix)
 
- set(stub stub)
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
+ add_cc_or_ld_arguments(LINKER ARGUMENTS "--example=123")
+ add_cc_or_ld_arguments(LINKER ARGUMENTS "-x")
 
- add_cc_or_ld_argument(LINKER stub "--example=123")
- add_cc_or_ld_argument(LINKER stub "-x")
-
- set(linker_arg_list_var "${prefix}_stub_UNPAIRED_LINKER_ARGS")
+ set(linker_arg_list_var "${prefix}_UNPAIRED_LINKER_ARGS")
  assert_equals("--example=123;-x" "${${linker_arg_list_var}}")
 endfunction()
-define_test(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
+define_test(add_cc_or_ld_arguments_sets_expected_variable_for_linker_argument)
 
 function(
- add_cc_or_ld_argument_sets_expected_variable_for_multiple_compiler_arguments
+ add_cc_or_ld_arguments_sets_expected_variable_for_multiple_compiler_arguments
 )
  get_project_compiler_details_prefix(prefix)
 
- set(stub stub)
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
+ add_cc_or_ld_arguments(COMPILER ARGUMENTS -a -b -c)
+ add_cc_or_ld_arguments(COMPILER ARGUMENTS -d -e -f)
 
- add_cc_or_ld_argument(COMPILER stub -a -b -c)
- add_cc_or_ld_argument(COMPILER stub -d -e -f)
-
- set(compiler_arg_list_var "${prefix}_stub_UNPAIRED_COMPILER_ARGS")
+ set(compiler_arg_list_var "${prefix}_UNPAIRED_COMPILER_ARGS")
  assert_equals("-a;-b;-c;-d;-e;-f" "${${compiler_arg_list_var}}")
 endfunction()
 define_test(
- add_cc_or_ld_argument_sets_expected_variable_for_multiple_compiler_arguments
+ add_cc_or_ld_arguments_sets_expected_variable_for_multiple_compiler_arguments
 )
 
 function(
- add_cc_or_ld_argument_sets_expected_variable_for_multiple_linker_arguments
+ add_cc_or_ld_arguments_sets_expected_variable_for_multiple_linker_arguments
 )
  get_project_compiler_details_prefix(prefix)
 
- set(stub stub)
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
+ add_cc_or_ld_arguments(LINKER ARGUMENTS -a -b -c)
+ add_cc_or_ld_arguments(LINKER ARGUMENTS -d -e -f)
 
- add_cc_or_ld_argument(LINKER stub -a -b -c)
- add_cc_or_ld_argument(LINKER stub -d -e -f)
-
- set(linker_arg_list_var "${prefix}_stub_UNPAIRED_LINKER_ARGS")
+ set(linker_arg_list_var "${prefix}_UNPAIRED_LINKER_ARGS")
  assert_equals("-a;-b;-c;-d;-e;-f" "${${linker_arg_list_var}}")
 endfunction()
 define_test(
- add_cc_or_ld_argument_sets_expected_variable_for_multiple_linker_arguments
+ add_cc_or_ld_arguments_sets_expected_variable_for_multiple_linker_arguments
 )
 
 ##`get_cc_and_ld_arguments` tests
 function(get_cc_or_ld_arguments_with_empty_type_raises_error)
- get_cc_or_ld_arguments("" "" "")
+ get_cc_or_ld_arguments("" "")
 endfunction()
 define_test(
  get_cc_or_ld_arguments_with_empty_type_raises_error
@@ -902,28 +832,8 @@ define_test(
  EXPECT_FAIL
 )
 
-function(get_cc_or_ld_arguments_with_empty_compiler_raises_error)
- get_cc_or_ld_arguments(LINKER "" "")
-endfunction()
-define_test(
- get_cc_or_ld_arguments_with_empty_compiler_raises_error
- REGEX "get_cc_or_ld_arguments: The <COMPILER> argument must not be empty!"
- EXPECT_FAIL
-)
-
-function(get_cc_or_ld_arguments_with_empty_destination_variable_raises_error)
- get_cc_or_ld_arguments(COMPILER example "")
-endfunction()
-define_test(
- get_cc_or_ld_arguments_with_empty_destination_variable_raises_error
- REGEX
-  "get_cc_or_ld_arguments: The <DESTINATION_VARIABLE> argument must not be "
-  "empty!"
- EXPECT_FAIL
-)
-
 function(get_cc_or_ld_arguments_with_invalid_type_raises_error)
- get_cc_or_ld_arguments(INVALID none unused)
+ get_cc_or_ld_arguments(INVALID "")
 endfunction()
 define_test(
  get_cc_or_ld_arguments_with_invalid_type_raises_error
@@ -933,38 +843,33 @@ define_test(
  EXPECT_FAIL
 )
 
+function(get_cc_or_ld_arguments_with_empty_destination_variable_raises_error)
+ get_cc_or_ld_arguments(COMPILER "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_with_empty_destination_variable_raises_error
+ REGEX
+  "get_cc_or_ld_arguments: The <DESTINATION_VARIABLE> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
 function(get_cc_or_ld_arguments_with_compiler_type_yields_expected_value)
- set(stub stub)
+ add_cc_or_ld_arguments(COMPILER ARGUMENTS "-x")
+ add_cc_or_ld_arguments(COMPILER ARGUMENTS "--y")
+ add_cc_or_ld_arguments(COMPILER ARGUMENTS "--z=a")
 
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
-
- add_cc_or_ld_argument(COMPILER stub "-x")
- add_cc_or_ld_argument(COMPILER stub "--y")
- add_cc_or_ld_argument(COMPILER stub "--z=a")
-
- get_cc_or_ld_arguments(COMPILER stub value)
+ get_cc_or_ld_arguments(COMPILER value)
  assert_equals("-x;--y;--z=a" "${value}")
 
 endfunction()
 define_test(get_cc_or_ld_arguments_with_compiler_type_yields_expected_value)
 
 function(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
- set(stub stub)
+ add_cc_or_ld_arguments(LINKER ARGUMENTS "-a")
+ add_cc_or_ld_arguments(LINKER ARGUMENTS "-b")
 
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
-
- add_cc_or_ld_argument(LINKER stub "-a")
- add_cc_or_ld_argument(LINKER stub "-b")
-
- get_cc_or_ld_arguments(LINKER stub value)
+ get_cc_or_ld_arguments(LINKER value)
  assert_equals("-a;-b" "${value}")
 endfunction()
 define_test(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
@@ -972,16 +877,8 @@ define_test(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
 function(
  get_cc_or_ld_arguments_with_multiple_compiler_args_lists_yields_expected_value
 )
-  set(stub stub)
-
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
-
  get_project_compiler_details_prefix(prefix)
- set(super_list_var "${prefix}_stub_COMPILER_ARGS_LISTS")
+ set(super_list_var "${prefix}_COMPILER_ARGS_LISTS")
  list(
   APPEND list1
   1 2 3 4 5
@@ -1002,7 +899,7 @@ function(
   )
  endforeach()
 
- get_cc_or_ld_arguments(COMPILER stub value)
+ get_cc_or_ld_arguments(COMPILER value)
  assert_equals("${expected}" "${value}")
 endfunction()
 define_test(
@@ -1012,16 +909,8 @@ define_test(
 function(
  get_cc_or_ld_arguments_with_multiple_linker_args_lists_yields_expected_value
 )
-  set(stub stub)
-
- detect_compiler(
-  unused
-  COMPILER_ID stub
-  SUPPORTED_COMPILERS stub
- )
-
  get_project_compiler_details_prefix(prefix)
- set(super_list_var "${prefix}_stub_LINKER_ARGS_LISTS")
+ set(super_list_var "${prefix}_LINKER_ARGS_LISTS")
  list(
   APPEND list1
   1 2 3 4 5
@@ -1042,14 +931,215 @@ function(
   )
  endforeach()
 
- get_cc_or_ld_arguments(LINKER stub value)
+ get_cc_or_ld_arguments(LINKER value)
  assert_equals("${expected}" "${value}")
 endfunction()
 define_test(
  get_cc_or_ld_arguments_with_multiple_linker_args_lists_yields_expected_value
 )
 
-##TODO `add_cc_or_ld_arguments_for_build_flag` tests
+##`add_cc_or_ld_arguments_for_build_flag` tests
+function(
+ add_cc_or_ld_arguments_for_build_flag_with_empty_type_argument_raises_error
+)
+ add_cc_or_ld_arguments_for_build_flag("" "")
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_with_empty_type_argument_raises_error
+ REGEX
+  "add_cc_or_ld_arguments_for_build_flag: The <TYPE> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(
+ add_cc_or_ld_arguments_for_build_flag_with_invalid_type_argument_raises_error
+)
+ add_cc_or_ld_arguments_for_build_flag(INVALID "")
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_with_invalid_type_argument_raises_error
+ REGEX
+  "add_cc_or_ld_arguments_for_build_flag: The type 'INVALID' is not a valid "
+  "option! Must be one of: \[COMPILER, LINKER\]."
+ EXPECT_FAIL
+)
+
+function(
+ add_cc_or_ld_arguments_for_build_flag_with_empty_flag_argument_raises_error
+)
+ add_cc_or_ld_arguments_for_build_flag(COMPILER "")
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_with_empty_flag_argument_raises_error
+ REGEX
+  "add_cc_or_ld_arguments_for_build_flag: The <FLAG> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(
+ add_cc_or_ld_arguments_for_build_flag_with_non_existent_flag_raises_error
+)
+ add_cc_or_ld_arguments_for_build_flag(COMPILER non_existent)
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_with_non_existent_flag_raises_error
+ REGEX
+  "add_cc_or_ld_arguments_for_build_flag: The build flag 'non_existent' does "
+  "not exist!"
+ EXPECT_FAIL
+)
+
+function(add_cc_or_ld_arguments_for_build_flag_with_no_arguments_raises_error)
+ add_build_flag(example_flag)
+
+ add_cc_or_ld_arguments_for_build_flag(COMPILER example_flag)
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_with_no_arguments_raises_error
+ REGEX
+  "add_cc_or_ld_arguments_for_build_flag: The 'ARGUMENTS'... argument must "
+  "not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ add_cc_or_ld_arguments_for_build_flag_for_compiler_type_sets_expected_variables
+)
+ add_build_flag(flag1)
+
+ add_cc_or_ld_arguments_for_build_flag(
+  COMPILER
+  flag1
+  ARGUMENTS
+   "-DA=B"
+   "-DC=D"
+ )
+
+ get_project_compiler_details_prefix(prefix)
+ set(super_list_var "${prefix}_COMPILER_ARGS_LISTS")
+ set(flag_args_var "${prefix}_flag1_FLAG_COMPILER_ARGS")
+ assert_equals("${flag_args_var}" "${${super_list_var}}")
+ assert_equals("-DA=B;-DC=D" "${${flag_args_var}}")
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_for_compiler_type_sets_expected_variables
+)
+
+function(
+ add_cc_or_ld_arguments_for_build_flag_for_linker_type_sets_expected_variables
+)
+ add_build_flag(example_flag)
+
+ add_cc_or_ld_arguments_for_build_flag(
+  LINKER
+  example_flag
+  ARGUMENTS
+   "-O0"
+   "-g"
+   "-DNDEBUG"
+ )
+
+ get_project_compiler_details_prefix(prefix)
+ set(super_list_var "${prefix}_LINKER_ARGS_LISTS")
+ set(flag_args_var "${prefix}_example_flag_FLAG_LINKER_ARGS")
+ assert_equals("${flag_args_var}" "${${super_list_var}}")
+ assert_equals("-O0;-g;-DNDEBUG" "${${flag_args_var}}")
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_for_linker_type_sets_expected_variables
+)
+
+function(
+ add_cc_or_ld_arguments_for_build_flag_for_compiler_type_with_multiple_arguments_sets_expected_variables
+)
+ add_build_flag(flag1)
+ add_build_flag(flag2)
+
+ add_cc_or_ld_arguments_for_build_flag(
+  COMPILER
+  flag1
+  ARGUMENTS
+   -a
+   -b
+   -c
+ )
+ add_cc_or_ld_arguments_for_build_flag(
+  COMPILER
+  flag1
+  ARGUMENTS
+   1
+   2
+   3
+ )
+
+ add_cc_or_ld_arguments_for_build_flag(
+  COMPILER
+  flag2
+  ARGUMENTS
+   hello
+   world
+   123
+   abc
+ )
+
+ get_project_compiler_details_prefix(prefix)
+ set(super_list_var "${prefix}_COMPILER_ARGS_LISTS")
+ set(flag1_args_var "${prefix}_flag1_FLAG_COMPILER_ARGS")
+ set(flag2_args_var "${prefix}_flag2_FLAG_COMPILER_ARGS")
+ assert_equals("${flag1_args_var};${flag2_args_var}" "${${super_list_var}}")
+ assert_equals("-a;-b;-c;1;2;3" "${${flag1_args_var}}")
+ assert_equals("hello;world;123;abc" "${${flag2_args_var}}")
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_for_compiler_type_with_multiple_arguments_sets_expected_variables
+)
+
+function(
+ add_cc_or_ld_arguments_for_build_flag_for_linker_type_with_multiple_arguments_sets_expected_variables
+)
+ add_build_flag(flag1)
+ add_build_flag(flag2)
+
+ add_cc_or_ld_arguments_for_build_flag(
+  LINKER
+  flag1
+  ARGUMENTS
+   -a
+   -b
+   -c
+ )
+ add_cc_or_ld_arguments_for_build_flag(
+  LINKER
+  flag1
+  ARGUMENTS
+   1
+   2
+   3
+ )
+
+ add_cc_or_ld_arguments_for_build_flag(
+  LINKER
+  flag2
+  ARGUMENTS
+   hello
+   world
+   123
+   abc
+ )
+
+ get_project_compiler_details_prefix(prefix)
+ set(super_list_var "${prefix}_LINKER_ARGS_LISTS")
+ set(flag1_args_var "${prefix}_flag1_FLAG_LINKER_ARGS")
+ set(flag2_args_var "${prefix}_flag2_FLAG_LINKER_ARGS")
+ assert_equals("${flag1_args_var};${flag2_args_var}" "${${super_list_var}}")
+ assert_equals("-a;-b;-c;1;2;3" "${${flag1_args_var}}")
+ assert_equals("hello;world;123;abc" "${${flag2_args_var}}")
+endfunction()
+define_test(
+ add_cc_or_ld_arguments_for_build_flag_for_linker_type_with_multiple_arguments_sets_expected_variables
+)
 
 ##TODO `get_cc_or_ld_arguments_for_build_flag` tests
 
