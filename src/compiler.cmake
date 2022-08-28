@@ -1026,13 +1026,34 @@ function(add_cc_or_ld_argument acola_TYPE acola_COMPILER)
  #Determine dest var
  if(acola_TYPE STREQUAL "COMPILER")
   set(
+   acola_SUPER_LIST_VAR
+   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_COMPILER_ARGS_LISTS"
+  )
+  set(
    acola_DEST_VAR
-   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_COMPILER_ARGS"
+   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_UNPAIRED_COMPILER_ARGS"
   )
  elseif(acola_TYPE STREQUAL "LINKER")
   set(
+   acola_SUPER_LIST_VAR
+   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_LINKER_ARGS_LISTS"
+  )
+  set(
    acola_DEST_VAR
-   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_LINKER_ARGS"
+   "${acola_COMPILER_DETAILS_PREFIX}_${acola_COMPILER}_UNPAIRED_LINKER_ARGS"
+  )
+ endif()
+
+ #Append dest var arg list to compiler/linker args super list
+ if(NOT "${acola_DEST_VAR}" IN_LIST "${acola_SUPER_LIST_VAR}")
+  list(
+   APPEND "${acola_SUPER_LIST_VAR}"
+   "${acola_DEST_VAR}"
+  )
+  set(
+   "${acola_SUPER_LIST_VAR}"
+   "${${acola_SUPER_LIST_VAR}}"
+   PARENT_SCOPE
   )
  endif()
 
@@ -1129,20 +1150,28 @@ function(get_cc_or_ld_arguments
  #Determine which list var to use
  if(gcola_TYPE STREQUAL "COMPILER")
   set(
-   gcola_LIST_VAR
-   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_COMPILER_ARGS"
+   gcola_ARGS_LISTS_VAR
+   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_COMPILER_ARGS_LISTS"
   )
  elseif(gcola_TYPE STREQUAL "LINKER")
   set(
-   gcola_LIST_VAR
-   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_LINKER_ARGS"
+   gcola_ARGS_LISTS_VAR
+   "${gcola_COMPILER_DETAILS_PREFIX}_${gcola_COMPILER}_LINKER_ARGS_LISTS"
   )
  endif()
+
+ #Collect all arguments
+ foreach(gcola_ARGS_LIST ${${gcola_ARGS_LISTS_VAR}})
+  list(
+   APPEND gcola_TOTAL_ARGS_LIST
+   "${${gcola_ARGS_LIST}}"
+  )
+ endforeach()
 
  #Set destination variable in parent scope
  set(
   "${gcola_DESTINATION_VARIABLE}"
-  "${${gcola_LIST_VAR}}"
+  "${gcola_TOTAL_ARGS_LIST}"
   PARENT_SCOPE
  )
 endfunction()
@@ -1154,8 +1183,112 @@ assert_name_unique(
  "Name collision: Function 'add_cc_or_ld_arguments_for_build_flag' is already "
  "defined elsewhere!"
 )
-function(add_cc_or_ld_arguments_for_build_flag)
- message(FATAL_ERROR "Unimplemented!")
+function(add_cc_or_ld_arguments_for_build_flag
+ acolafbf_TYPE
+ acolafbf_COMPILER
+ acolafbf_FLAG
+)
+ #TODO Help message
+ string(
+  APPEND acolafbf_HELP_MESSAGE
+  "TODO"
+ )
+
+ #Validate arguments
+ is_empty(acolafbf_TYPE_EMPTY "${acolafbf_TYPE}")
+ if(acolafbf_TYPE_EMPTY)
+  message("${acolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_arguments_for_build_flag: The <TYPE> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(acolafbf_TYPE_EMPTY)
+
+ is_empty(acolafbf_COMPILER_EMPTY "${acolafbf_COMPILER}")
+ if(acolafbf_COMPILER_EMPTY)
+  message("${acolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_arguments_for_build_flag: The <COMPILER> argument must not "
+   "be empty!"
+  )
+ endif()
+ unset(acolafbf_COMPILER_EMPTY)
+
+ is_empty(acolafbf_FLAG_EMPTY "${acolafbf_FLAG}")
+ if(acolafbf_FLAG_EMPTY)
+  message("${acolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_arguments_for_build_flag: The <FLAG> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(acolafbf_FLAG_EMPTY)
+
+ is_compiler_supported(acolafbf_COMPILER_SUPPORTED "${acolafbf_COMPILER}")
+ if(NOT acolafbf_COMPILER_SUPPORTED)
+  message("${acolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_cc_or_ld_arguments_for_build_flag: Compiler '${acolafbf_COMPILER}' is "
+   "not supported!"
+  )
+ endif()
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(acolafbf_COMPILER_DETAILS_PREFIX)
+
+ #Determine dest var
+ if(acolafbf_TYPE STREQUAL "COMPILER")
+  string(
+   APPEND acolafbf_SUPER_LIST_VAR
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_COMPILER_ARGS_"
+   "LISTS"
+  )
+  string(
+   APPEND acolafbf_DEST_VAR
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_${acolafbf_FLAG}_"
+   "FLAG_COMPILER_ARGS"
+  )
+ elseif(acolafbf_TYPE STREQUAL "LINKER")
+  string(
+   APPEND acolafbf_SUPER_LIST_VAR
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_LINKER_ARGS_"
+   "LISTS"
+  )
+  string(
+   APPEND acolafbf_DEST_VAR
+   "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_COMPILER}_${acolafbf_FLAG}_"
+   "FLAG_LINKER_ARGS"
+  )
+ endif()
+
+ #Append dest var arg list to compiler/linker args super list
+ if(NOT "${acolafbf_DEST_VAR}" IN_LIST "${acolafbf_SUPER_LIST_VAR}")
+  list(
+   APPEND "${acolafbf_SUPER_LIST_VAR}"
+   "${acolafbf_DEST_VAR}"
+  )
+  set(
+   "${acolafbf_SUPER_LIST_VAR}"
+   "${${acolafbf_SUPER_LIST_VAR}}"
+   PARENT_SCOPE
+  )
+ endif()
+
+ #Append to compiler/linker flag args in parent scope
+ list(
+  APPEND "${acolafbf_DEST_VAR}"
+  "${acolafbf_FLAGS}"
+ )
+ set(
+  "${acolafbf_DEST_VAR}"
+  "${${acolafbf_DEST_VAR}}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #TODO

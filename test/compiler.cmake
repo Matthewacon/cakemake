@@ -823,8 +823,10 @@ function(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
  add_cc_or_ld_argument(COMPILER stub "-Dsome=value")
  add_cc_or_ld_argument(COMPILER stub "--hello_world")
 
- set(compiler_arg_list_var "${prefix}_stub_COMPILER_ARGS")
+ set(compiler_arg_list_var "${prefix}_stub_UNPAIRED_COMPILER_ARGS")
  assert_equals("-Dsome=value;--hello_world" "${${compiler_arg_list_var}}")
+ set(super_arg_list_var "${prefix}_stub_COMPILER_ARGS_LISTS")
+ assert_equals("${compiler_arg_list_var}" "${${super_arg_list_var}}")
 endfunction()
 define_test(add_cc_or_ld_argument_sets_expected_variable_for_compiler_argument)
 
@@ -841,12 +843,14 @@ function(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
  add_cc_or_ld_argument(LINKER stub "--example=123")
  add_cc_or_ld_argument(LINKER stub "-x")
 
- set(linker_arg_list_var "${prefix}_stub_LINKER_ARGS")
+ set(linker_arg_list_var "${prefix}_stub_UNPAIRED_LINKER_ARGS")
  assert_equals("--example=123;-x" "${${linker_arg_list_var}}")
 endfunction()
 define_test(add_cc_or_ld_argument_sets_expected_variable_for_linker_argument)
 
-function(add_cc_or_ld_argument_sets_expected_variable_for_multiple_arguments)
+function(
+ add_cc_or_ld_argument_sets_expected_variable_for_multiple_compiler_arguments
+)
  get_project_compiler_details_prefix(prefix)
 
  set(stub stub)
@@ -859,11 +863,33 @@ function(add_cc_or_ld_argument_sets_expected_variable_for_multiple_arguments)
  add_cc_or_ld_argument(COMPILER stub -a -b -c)
  add_cc_or_ld_argument(COMPILER stub -d -e -f)
 
- set(compiler_arg_list_var "${prefix}_stub_COMPILER_ARGS")
+ set(compiler_arg_list_var "${prefix}_stub_UNPAIRED_COMPILER_ARGS")
  assert_equals("-a;-b;-c;-d;-e;-f" "${${compiler_arg_list_var}}")
 endfunction()
 define_test(
- add_cc_or_ld_argument_sets_expected_variable_for_multiple_arguments
+ add_cc_or_ld_argument_sets_expected_variable_for_multiple_compiler_arguments
+)
+
+function(
+ add_cc_or_ld_argument_sets_expected_variable_for_multiple_linker_arguments
+)
+ get_project_compiler_details_prefix(prefix)
+
+ set(stub stub)
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ add_cc_or_ld_argument(LINKER stub -a -b -c)
+ add_cc_or_ld_argument(LINKER stub -d -e -f)
+
+ set(linker_arg_list_var "${prefix}_stub_UNPAIRED_LINKER_ARGS")
+ assert_equals("-a;-b;-c;-d;-e;-f" "${${linker_arg_list_var}}")
+endfunction()
+define_test(
+ add_cc_or_ld_argument_sets_expected_variable_for_multiple_linker_arguments
 )
 
 ##`get_cc_and_ld_arguments` tests
@@ -942,6 +968,90 @@ function(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
  assert_equals("-a;-b" "${value}")
 endfunction()
 define_test(get_cc_or_ld_arguments_with_linker_type_yields_expected_value)
+
+function(
+ get_cc_or_ld_arguments_with_multiple_compiler_args_lists_yields_expected_value
+)
+  set(stub stub)
+
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ get_project_compiler_details_prefix(prefix)
+ set(super_list_var "${prefix}_stub_COMPILER_ARGS_LISTS")
+ list(
+  APPEND list1
+  1 2 3 4 5
+ )
+ list(
+  APPEND list2
+  a b c d e f
+ )
+ list(
+  APPEND "${super_list_var}"
+  list1 list2
+ )
+
+ foreach(list_name ${${super_list_var}})
+  list(
+   APPEND expected
+   "${${list_name}}"
+  )
+ endforeach()
+
+ get_cc_or_ld_arguments(COMPILER stub value)
+ assert_equals("${expected}" "${value}")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_with_multiple_compiler_args_lists_yields_expected_value
+)
+
+function(
+ get_cc_or_ld_arguments_with_multiple_linker_args_lists_yields_expected_value
+)
+  set(stub stub)
+
+ detect_compiler(
+  unused
+  COMPILER_ID stub
+  SUPPORTED_COMPILERS stub
+ )
+
+ get_project_compiler_details_prefix(prefix)
+ set(super_list_var "${prefix}_stub_LINKER_ARGS_LISTS")
+ list(
+  APPEND list1
+  1 2 3 4 5
+ )
+ list(
+  APPEND list2
+  a b c d e f
+ )
+ list(
+  APPEND "${super_list_var}"
+  list1 list2
+ )
+
+ foreach(list_name ${${super_list_var}})
+  list(
+   APPEND expected
+   "${${list_name}}"
+  )
+ endforeach()
+
+ get_cc_or_ld_arguments(LINKER stub value)
+ assert_equals("${expected}" "${value}")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_with_multiple_linker_args_lists_yields_expected_value
+)
+
+##TODO `add_cc_or_ld_arguments_for_build_flag` tests
+
+##TODO `get_cc_or_ld_arguments_for_build_flag` tests
 
 ##`generate_inline_namespace` tests
 function(
