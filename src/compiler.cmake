@@ -12,7 +12,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/flags.cmake)
  - Custom linker support
  - Make all DESTINATION_VARIABLE arguments the first argument
  - cross-toolchain test coverage abstraction
- - add cc define formatters for all supported compilers
+ - pre-compiled header support
 ]]
 
 #[[
