@@ -7,11 +7,12 @@ include(${CMAKE_CURRENT_LIST_DIR}/flags.cmake)
 
 #[[TODO:
  - Set up global cache variable for prefixing all definitions in this library
- - Add help messages to all functions
  - Ensure that all relevant functions check that `detect_compiler` was invoked
    beforehand
  - Custom linker support
  - Make all DESTINATION_VARIABLE arguments the first argument
+ - cross-toolchain test coverage abstraction
+ - add cc define formatters for all supported compilers
 ]]
 
 #[[
@@ -1272,21 +1273,21 @@ function(add_cc_or_ld_arguments_for_build_flag
 
  #Determine dest var
  if(acolafbf_TYPE STREQUAL "COMPILER")
-  string(
-   APPEND acolafbf_SUPER_LIST_VAR
+  set(
+   acolafbf_SUPER_LIST_VAR
    "${acolafbf_COMPILER_DETAILS_PREFIX}_COMPILER_ARGS_LISTS"
   )
-  string(
-   APPEND acolafbf_DEST_VAR
+  set(
+   acolafbf_DEST_VAR
    "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_FLAG}_FLAG_COMPILER_ARGS"
   )
  elseif(acolafbf_TYPE STREQUAL "LINKER")
-  string(
-   APPEND acolafbf_SUPER_LIST_VAR
+  set(
+   acolafbf_SUPER_LIST_VAR
    "${acolafbf_COMPILER_DETAILS_PREFIX}_LINKER_ARGS_LISTS"
   )
-  string(
-   APPEND acolafbf_DEST_VAR
+  set(
+   acolafbf_DEST_VAR
    "${acolafbf_COMPILER_DETAILS_PREFIX}_${acolafbf_FLAG}_FLAG_LINKER_ARGS"
   )
  endif()
@@ -1316,15 +1317,117 @@ function(add_cc_or_ld_arguments_for_build_flag
  )
 endfunction()
 
-#TODO
+#[[
+ Retrieves the compiler or linker flags associated with a feature flag, if any,
+ and places the result in the destination variable in the parent scope
+]]
 assert_name_unique(
  get_cc_or_ld_arguments_for_build_flag
  COMMAND
  "Name collision: Function 'get_cc_or_ld_arguments_for_build_flag' is already "
  "defined elsewhere!"
 )
-function(get_cc_or_ld_arguments_for_build_flag)
- message(FATAL_ERROR "Unimplemented!")
+function(get_cc_or_ld_arguments_for_build_flag
+ gcolafbf_TYPE
+ gcolafbf_FLAG
+ gcolafbf_DESTINATION_VARIABLE
+)
+ #Help message
+ string(
+  APPEND gcolafbf_HELP_MESSAGE
+  "'get_cc_or_ld_arguments_for_build_flag' takes the following arguments:"
+  "\n - (REQUIRED) <TYPE>: Either 'COMPILER' or 'LINKER'"
+  "\n - (REQUIRED) <FLAG>: The name of the flag to fetch the compiler or "
+  "linker arguments for"
+  "\n - (REQURIED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
+
+ #Validate arguments
+ is_empty(gcolafbf_TYPE_EMPTY "${gcolafbf_TYPE}")
+ if(gcolafbf_TYPE_EMPTY)
+  message("${gcolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments_for_build_flag: The <TYPE> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(gcolafbf_TYPE_EMPTY)
+
+ list(
+  APPEND gcolafbf_SUPPORTED_TYPES
+  COMPILER
+  LINKER
+ )
+ if(NOT "${gcolafbf_TYPE}" IN_LIST gcolafbf_SUPPORTED_TYPES)
+  message("${gcolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments_for_build_flag: The type '${gcolafbf_TYPE}' is not "
+   "a valid option! Must be one of: [COMPILER, LINKER]."
+  )
+ endif()
+ unset(gcolafbf_SUPPORTED_TYPES)
+
+ is_empty(gcolafbf_FLAG_EMPTY "${gcolafbf_FLAG}")
+ if(gcolafbf_FLAG_EMPTY)
+  message("${gcolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments_for_build_flag: The <FLAG> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(gcolafbf_FLAG_EMPTY)
+
+ does_build_flag_exist("${gcolafbf_FLAG}" gcolafbf_FLAG_EXISTS)
+ if(NOT gcolafbf_FLAG_EXISTS)
+  message("${gcolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments_for_build_flag: The build flag '${gcolafbf_FLAG}' "
+   "does not exist!"
+  )
+ endif()
+ unset(gcolafbf_FLAG_EXISTS)
+
+ is_empty(
+  gcolafbf_DESTINATION_VARIABLE_EMPTY
+  "${gcolafbf_DESTINATION_VARIABLE}"
+ )
+ if(gcolafbf_DESTINATION_VARIABLE_EMPTY)
+  message("${gcolafbf_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_cc_or_ld_arguments_for_build_flag: The <DESTINATION_VARIABLE> "
+   "argument must not be empty!"
+  )
+ endif()
+ unset(gcolafbf_DESTINATION_VARIABLE_EMPTY)
+
+ #Compiler details prefix
+ get_project_compiler_details_prefix(gcolafbf_COMPILER_DETAILS_PREFIX)
+
+ #Determine dest var
+ if(gcolafbf_TYPE STREQUAL "COMPILER")
+  set(
+   gcolafbf_FLAG_ARGS_VAR
+   "${gcolafbf_COMPILER_DETAILS_PREFIX}_${gcolafbf_FLAG}_FLAG_COMPILER_ARGS"
+  )
+ elseif(gcolafbf_TYPE STREQUAL "LINKER")
+  set(
+   gcolafbf_FLAG_ARGS_VAR
+   "${gcolafbf_COMPILER_DETAILS_PREFIX}_${gcolafbf_FLAG}_FLAG_LINKER_ARGS"
+  )
+ endif()
+
+ #Set result on desintation variable in parent scope
+ set(
+  "${gcolafbf_DESTINATION_VARIABLE}"
+  "${${gcolafbf_FLAG_ARGS_VAR}}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #[[
@@ -1505,8 +1608,3 @@ function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
  #Set guard symbol on destination variable in parent scope
  set("${ggs_DESTINATION_VARIABLE}" "${ggs_GUARD_SYMBOL}" PARENT_SCOPE)
 endfunction()
-
-#[[ TODO
- - cross-toolchain test coverage abstraction
- - add cc define formatters for all supported compilers
-]]

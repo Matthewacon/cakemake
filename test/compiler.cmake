@@ -1142,6 +1142,109 @@ define_test(
 )
 
 ##TODO `get_cc_or_ld_arguments_for_build_flag` tests
+function(
+ get_cc_or_ld_arguments_for_build_flag_with_empty_type_argument_raises_error
+)
+ get_cc_or_ld_arguments_for_build_flag("" "" "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_for_build_flag_with_empty_type_argument_raises_error
+ REGEX
+  "get_cc_or_ld_arguments_for_build_flag: The <TYPE> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(get_cc_or_ld_arguments_for_build_flag_with_invalid_type_raises_error)
+ get_cc_or_ld_arguments_for_build_flag(INVALID "" "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_for_build_flag_with_invalid_type_raises_error
+ REGEX
+  "get_cc_or_ld_arguments_for_build_flag: The type 'INVALID' is not a valid "
+  "option! Must be one of: \[COMPILER, LINKER\]."
+ EXPECT_FAIL
+)
+
+function(
+ get_cc_or_ld_arguments_for_build_flag_with_empty_flag_argument_raises_error
+)
+ get_cc_or_ld_arguments_for_build_flag(COMPILER "" "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_for_build_flag_with_empty_flag_argument_raises_error
+ REGEX
+  "get_cc_or_ld_arguments_for_build_flag: The <FLAG> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(
+ get_cc_or_ld_arguments_for_build_flag_with_non_existent_flag_raises_error
+)
+ get_cc_or_ld_arguments_for_build_flag(COMPILER some_flag "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_for_build_flag_with_non_existent_flag_raises_error
+ REGEX
+  "get_cc_or_ld_arguments_for_build_flag: The build flag 'some_flag' does not "
+  "exist!"
+ EXPECT_FAIL
+)
+
+function(
+ get_cc_or_ld_arguments_for_build_flag_with_empty_desintation_variable_argument_raises_error
+)
+ add_build_flag(example_flag)
+ get_cc_or_ld_arguments_for_build_flag(COMPILER example_flag "")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_for_build_flag_with_empty_desintation_variable_argument_raises_error
+ REGEX
+  "get_cc_or_ld_arguments_for_build_flag: The <DESTINATION_VARIABLE> argument "
+  "must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ get_cc_or_ld_arguments_for_build_flag_with_compiler_type_yields_expected_value
+)
+ add_build_flag(example_flag)
+ add_cc_or_ld_arguments_for_build_flag(
+  COMPILER
+  example_flag
+  ARGUMENTS
+   a
+   b
+   c
+ )
+
+ get_cc_or_ld_arguments_for_build_flag(COMPILER example_flag value)
+ assert_equals("a;b;c" "${value}")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_for_build_flag_with_compiler_type_yields_expected_value
+)
+
+function(
+ get_cc_or_ld_arguments_for_build_flag_with_linker_type_yields_expected_value
+)
+ add_build_flag(example_flag)
+ add_cc_or_ld_arguments_for_build_flag(
+  LINKER
+  example_flag
+  ARGUMENTS
+   a
+   b
+   c
+ )
+
+ get_cc_or_ld_arguments_for_build_flag(LINKER example_flag value)
+ assert_equals("a;b;c" "${value}")
+endfunction()
+define_test(
+ get_cc_or_ld_arguments_for_build_flag_with_linker_type_yields_expected_value
+)
 
 ##`generate_inline_namespace` tests
 function(
