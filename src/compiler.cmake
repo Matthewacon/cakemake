@@ -1438,8 +1438,8 @@ endfunction()
 assert_name_unique(
  generate_inline_namespace
  COMMAND
- "Name collision: Function 'generate_inline_namespace' command already "
- "defined elsewhere!"
+ "Name collision: Function 'generate_inline_namespace' is already defined "
+ "elsewhere!"
 )
 function(generate_inline_namespace gin_DESTINATION_VARIABLE)
  #Help message
@@ -1502,7 +1502,7 @@ endfunction()
 assert_name_unique(
  generate_guard_symbol
  COMMAND
- "Name collision: Function 'generate_guard_symbol' command already defined "
+ "Name collision: Function 'generate_guard_symbol' is already defined "
  "elsewhere!"
 )
 function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
@@ -1608,3 +1608,175 @@ function(generate_guard_symbol ggs_DESTINATION_VARIABLE)
  #Set guard symbol on destination variable in parent scope
  set("${ggs_DESTINATION_VARIABLE}" "${ggs_GUARD_SYMBOL}" PARENT_SCOPE)
 endfunction()
+
+#[[
+ Adds a precompiled header target handler that is invoked for every PCH file,
+ added by calling `add_precompiled_header`. The handler should define a custom
+ command to generate the specified output file.
+
+ Clang Linux Example:
+ ```cmake
+ function(clang_cxx_pch_handler
+  working_dir
+  depends
+  include_dir
+  header_path
+  header
+  output
+ )
+  add_custom_command(
+   OUTPUT ${output}
+   DEPENDS ${depends}
+   WORKING_DIRECTORY ${working_dir}
+   COMMAND bash -c 'mkdir -p ${header_path}'
+   COMMAND ${CMAKE_CXX_COMPILER}
+    -I${include_dir}
+    -x c++-header
+    ${header}
+    -o ${CMAKE_BINARY_DIR}/${output}
+  )
+ endfunction()
+
+ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_precompiled_header_handler(
+   Clang
+   CXX
+   clang_cxx_pch_handler
+  )
+ endif()
+ ```
+]]
+assert_name_unique(
+ add_precompiled_header_handler
+ COMMAND
+ "Name collision: Function 'add_precompiled_header_handler' is already "
+ "defined elsewhere!"
+)
+function(add_precompiled_header_handler
+ aphh_COMPILER
+ aphh_LANGUAGE
+ aphh_HANDLER
+)
+ #Help message
+ string(
+  APPEND aphh_HELP_MESSAGE
+  "'add_precompiled_header_handler' takes the following arguments:"
+  "\n - (REQUIRED) <COMPILER>: The compiler ID for this handler"
+  "\n - (REQUIRED) <LANGUGAE>: The language for this handler; see "
+  "https://cmake.org/cmake/help/latest/prop_gbl/ENABLED_LANGUAGES.html"
+  "\n - (REQUIRED) <HANDLER>: The name of the handler function"
+ )
+
+ #Validate arguments
+ is_empty(aphh_COMPILER_EMPTY "${aphh_COMPILER}")
+ if(aphh_COMPILER_EMPTY)
+  message("${aphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_precompiled_header_handler: The <COMPILER> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(aphh_COMPILER_EMPTY)
+
+ is_empty(aphh_LANGUAGE_EMPTY "${aphh_LANGUAGE}")
+ if(aphh_LANGUAGE_EMPTY)
+  message("aphh_HELP_MESSAGE")
+  message(
+   FATAL_ERROR
+   "add_precompiled_header_handler: The <LANGUAGE> argument must not be empty!"
+  )
+ endif()
+ unset(aphh_LANGUAGE_EMPTY)
+
+ is_empty(aphh_HANDLER_EMPTY "${aphh_HANDLER}")
+ if(aphh_HANDLER_EMPTY)
+  message("${aphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_precompiled_header_handler: The <HANDLER> argument must not be empty!"
+  )
+ endif()
+ unset(aphh_HANDLER_EMPTY)
+
+ #Ensure handler function exists
+ if(NOT COMMAND "${aphh_HANDLER}")
+  message("${aphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "add_precompiled_header_handler: The handler function '${aphh_HANDLER}' "
+   "does not exist!"
+  )
+ endif()
+
+ #Set handler in parent scope
+ get_project_compiler_details_prefix(aphh_COMPILER_DETAILS_PREFIX)
+ string(
+  APPEND aphh_HANDLER_VAR
+  "${aphh_COMPILER_DETAILS_PREFIX}_"
+  "${aphh_COMPILER}_"
+  "${aphh_LANGUAGE}_"
+  "PCH_HANDLER"
+ )
+ set(
+  "${aphh_HANDLER_VAR}"
+  "${aphh_HANDLER}"
+  PARENT_SCOPE
+ )
+endfunction()
+
+#[[
+ Removes a precompiled header handler function if it exists, otherwise raises
+ error
+]]
+assert_name_unique(
+ remove_precompiled_header_handler
+ COMMAND
+ "Name collision: Function 'remove_precompiled_header_handler' is already "
+ "defined elsewhere!"
+)
+function(remove_precompiled_header_handler gphh_COMPILER gphh_LANGUAGE)
+ #TODO
+endfunction()
+
+#[[
+ Retrieves the name of the precompiled header handler function for the compiler
+ and language
+]]
+assert_name_unique(
+ get_precompiled_header_handler
+ COMMAND
+ "Name collision: Function 'get_precompiled_header_handler' is already "
+ "defined elsewhere!"
+)
+function(get_precompiled_header_handler gphh_COMPILER gphh_LANGUAGE)
+endfunction()
+
+#Add a precompiled header or header directory, for a specified target
+assert_name_unique(
+ add_precompiled_header
+ COMMAND
+ "Name collision: Function 'add_precompiled_header' is already defined "
+ "elsewhere!"
+)
+function(add_precompiled_header aph_TARGET aph_TYPE aph_PATH)
+ #TODO
+endfunction()
+
+#Retrieve all of the precompiled headers for a specified target
+assert_name_unique(
+ get_precompiled_headers
+ COMMAND
+ "Name collision: Function 'get_precompiled_headers' is already defined "
+ "elsewhere!"
+)
+function(get_precompiled_headers aph_TARGET aph_DESTINATION_VARIABLE)
+ #TODO
+endfunction()
+
+#[[Include default implementations]]
+#Note: If in test, do not include defaults
+if(NOT DEFINED SUITE_NAME)
+ include(${CMAKE_CURRENT_LIST_DIR}/compiler/clang.cmake)
+ include(${CMAKE_CURRENT_LIST_DIR}/compiler/gnu.cmake)
+endif()

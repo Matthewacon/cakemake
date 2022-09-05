@@ -1420,3 +1420,61 @@ function(generate_guard_symbol_yields_expected_value)
  )
 endfunction()
 define_test(generate_guard_symbol_yields_expected_value)
+
+##`add_precompiled_header_handler` tests
+function(
+ add_precompiled_header_handler_with_empty_compiler_argument_raises_error
+)
+ add_precompiled_header_handler("" "" "")
+endfunction()
+define_test(
+ add_precompiled_header_handler_with_empty_compiler_argument_raises_error
+ REGEX
+  "add_precompiled_header_handler: The <COMPILER> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(add_precompiled_header_handler_with_empty_langauge_raises_error)
+ add_precompiled_header_handler(some_compiler "" "")
+endfunction()
+define_test(
+ add_precompiled_header_handler_with_empty_langauge_raises_error
+ REGEX
+  "add_precompiled_header_handler: The <LANGUAGE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ add_precompiled_header_handler_with_empty_handler_argument_raises_error
+)
+ add_precompiled_header_handler(some_compiler CXX "")
+endfunction()
+define_test(
+ add_precompiled_header_handler_with_empty_handler_argument_raises_error
+ REGEX
+  "add_precompiled_header_handler: The <HANDLER> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(add_precompiled_header_handler_with_non_existent_handler_raises_error)
+ add_precompiled_header_handler(some_compiler CXX some_handler)
+endfunction()
+define_test(
+ add_precompiled_header_handler_with_non_existent_handler_raises_error
+ REGEX
+  "add_precompiled_header_handler: The handler function 'some_handler' does "
+  "not exist!"
+ EXPECT_FAIL
+)
+
+function(add_precompiled_header_handler_sets_expected_variable)
+ get_project_compiler_details_prefix(prefix)
+ set(handler_var "${prefix}_some_compiler_CXX_PCH_HANDLER")
+
+ function(pch_handler_1)
+ endfunction()
+
+ add_precompiled_header_handler(some_compiler CXX pch_handler_1)
+ assert_equals("${${handler_var}}" "pch_handler_1")
+endfunction()
+define_test(add_precompiled_header_handler_sets_expected_variable)
