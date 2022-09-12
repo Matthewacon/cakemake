@@ -1735,8 +1735,62 @@ assert_name_unique(
  "Name collision: Function 'remove_precompiled_header_handler' is already "
  "defined elsewhere!"
 )
-function(remove_precompiled_header_handler gphh_COMPILER gphh_LANGUAGE)
- #TODO
+function(remove_precompiled_header_handler rphh_COMPILER rphh_LANGUAGE)
+ #Help message
+ string(
+  APPEND rphh_HELP_MESSAGE
+  "'remove_precompiled_header_handler' takes the following arguments:"
+  "\n - (REQUIRED) <COMPILER>: The name of the compiler"
+  "\n - (REQUIRED) <LAGNAUGE>: The PCH target language"
+ )
+
+ #Validate arguments
+ is_empty(rphh_COMPILER_EMPTY "${rphh_COMPILER}")
+ if(rphh_COMPILER_EMPTY)
+  message("${rphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "remove_precompiled_header_handler: The <COMPILER> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(rphh_COMPILER_EMPTY)
+
+ is_empty(rphh_LANGUAGE_EMPTY "${rphh_LANGUAGE}")
+ if(rphh_LANGUAGE_EMPTY)
+  message("${rphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "remove_precompiled_header_handler: The <LANGUAGE> argument must not be "
+   "empty!"
+  )
+ endif()
+ unset(rphh_LANGUAGE_EMPTY)
+
+ #Get name of precompiled header handler variable, in parent scope
+ get_project_compiler_details_prefix(rphh_COMPILER_DETAILS_PREFIX)
+ string(
+  APPEND rphh_HANDLER_VAR
+  "${rphh_COMPILER_DETAILS_PREFIX}_"
+  "${rphh_COMPILER}_"
+  "${rphh_LANGUAGE}_"
+  "PCH_HANDLER"
+ )
+
+ #Ensure that precompiled header handler exists
+ if(NOT DEFINED "${rphh_HANDLER_VAR}")
+  message("${rphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "remove_precompiled_header_handler: There exists no precompiled header "
+   "handler for the following values:"
+   "\n - Compiler: ${rphh_COMPILER}"
+   "\n - Language: ${rphh_LANGUAGE}"
+  )
+ endif()
+
+ #Remove association in parent scope
+ unset("${rphh_HANDLER_VAR}" PARENT_SCOPE)
 endfunction()
 
 #[[
@@ -1749,7 +1803,69 @@ assert_name_unique(
  "Name collision: Function 'get_precompiled_header_handler' is already "
  "defined elsewhere!"
 )
-function(get_precompiled_header_handler gphh_COMPILER gphh_LANGUAGE)
+function(get_precompiled_header_handler
+ gphh_COMPILER
+ gphh_LANGUAGE
+ gphh_DESTINATION_VARIABLE
+)
+ #Help message
+ string(
+  APPEND gphh_HELP_MESSAGE
+  "'get_precompiled_header_handler' takes the following arguments:"
+  "\n - (REQUIRED) <COMPILER>: The name of the compiler"
+  "\n - (REQUIRED) <LANGUAGE>: The PCH target language"
+  "\n - (REQUIRED) <DESTINATION_VARIABLE>: The name of the destination "
+  "variable to place the result in, in the parent scope"
+ )
+
+ #Validate arguments
+ is_empty(gphh_COMPILER_EMPTY "${gphh_COMPILER}")
+ if(gphh_COMPILER_EMPTY)
+  message("${gphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_precompiled_header_handler: The <COMPILER> argument must not be empty!"
+  )
+ endif()
+ unset(gphh_COMPILER_EMPTY)
+
+ is_empty(gphh_LANGUAGE_EMPTY "${gphh_LANGUAGE}")
+ if(gphh_LANGUAGE_EMPTY)
+  message("${gphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_precompiled_header_handler: The <LANGUAGE> argument must not be empty!"
+  )
+ endif()
+ unset(gphh_LANGUAGE_EMPTY)
+
+ is_empty(gphh_DESTINATION_VARIABLE_EMPTY "${gphh_DESTINATION_VARIABLE}")
+ if(gphh_DESTINATION_VARIABLE_EMPTY)
+  message("${gphh_HELP_MESSAGE}")
+  message(
+   FATAL_ERROR
+   "get_precompiled_header_handler: The <DESTINATION_VARIABLE> argument must "
+   "not be empty!"
+  )
+ endif()
+ unset(gphh_DESTINATION_VARIABLE_EMPTY)
+
+ #Get name of precompiled heaer variable, in parent scope
+ get_project_compiler_details_prefix(gphh_COMPILER_DETAILS_PREFIX)
+ string(
+  APPEND gphh_HANDLER_VAR
+  "${gphh_COMPILER_DETAILS_PREFIX}_"
+  "${gphh_COMPILER}_"
+  "${gphh_LANGUAGE}_"
+  "PCH_HANDLER"
+ )
+
+ #Set result on destination variable, in parent scope
+ set(
+  "${gphh_DESTINATION_VARIABLE}"
+  "${${gphh_HANDLER_VAR}}"
+  PARENT_SCOPE
+ )
 endfunction()
 
 #Add a precompiled header or header directory, for a specified target

@@ -1478,3 +1478,101 @@ function(add_precompiled_header_handler_sets_expected_variable)
  assert_equals("${${handler_var}}" "pch_handler_1")
 endfunction()
 define_test(add_precompiled_header_handler_sets_expected_variable)
+
+##`remove_precompiled_header_handler` tests
+function(remove_precompiled_header_handler_with_empty_compiler_raises_error)
+ remove_precompiled_header_handler("" "")
+endfunction()
+define_test(
+ remove_precompiled_header_handler_with_empty_compiler_raises_error
+ REGEX
+  "remove_precompiled_header_handler: The <COMPILER> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(remove_precompiled_header_handler_with_empty_language_raises_error)
+ remove_precompiled_header_handler(Clang "")
+endfunction()
+define_test(
+ remove_precompiled_header_handler_with_empty_language_raises_error
+ REGEX
+  "remove_precompiled_header_handler: The <LANGUAGE> argument must not be "
+  "empty!"
+ EXPECT_FAIL
+)
+
+function(
+ remove_precompiled_header_handler_with_non_existent_handler_raises_error
+)
+ remove_precompiled_header_handler(Clang C)
+endfunction()
+define_test(
+ remove_precompiled_header_handler_with_non_existent_handler_raises_error
+ REGEX
+  "remove_precompiled_header_handler: There exists no precompiled header "
+  "handler for the following values:"
+  "\n - Compiler: Clang"
+  "\n - Language: C"
+ EXPECT_FAIL
+)
+
+function(remove_precompiled_header_handler_unsets_expected_variable)
+ get_project_compiler_details_prefix(prefix)
+ set(var "${prefix}_Clang_C_PCH_HANDLER")
+ set("${var}" "example")
+
+ remove_precompiled_header_handler(Clang C)
+
+ if(DEFINED "${var}")
+  message(
+   FATAL_ERROR
+   "Expected '${var}' to be unset!"
+  )
+ endif()
+endfunction()
+define_test(remove_precompiled_header_handler_unsets_expected_variable)
+
+##`get_precompiled_header_handler` tests
+function(get_precompiled_header_handler_with_empty_compiler_raises_error)
+ get_precompiled_header_handler("" "" "")
+endfunction()
+define_test(
+ get_precompiled_header_handler_with_empty_compiler_raises_error
+ REGEX
+  "get_precompiled_header_handler: The <COMPILER> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_precompiled_header_handler_with_empty_langauge_raises_error)
+ get_precompiled_header_handler(Clang "" "")
+endfunction()
+define_test(
+ get_precompiled_header_handler_with_empty_langauge_raises_error
+ REGEX
+  "get_precompiled_header_handler: The <LANGUAGE> argument must not be empty!"
+ EXPECT_FAIL
+)
+
+function(
+ get_precompiled_header_handler_with_empty_destination_variable_raises_error
+)
+ get_precompiled_header_handler(Clang CXX "")
+endfunction()
+define_test(
+ get_precompiled_header_handler_with_empty_destination_variable_raises_error
+ REGEX
+  "get_precompiled_header_handler: The <DESTINATION_VARIABLE> argument must "
+  "not be empty!"
+ EXPECT_FAIL
+)
+
+function(get_precompiled_header_handler_yields_expected_value)
+ function(pch_handler_2)
+ endfunction()
+ add_precompiled_header_handler(some_compiler C pch_handler_2)
+
+ get_precompiled_header_handler(some_compiler C dest)
+ assert_equals("${dest}" pch_handler_2)
+endfunction()
+define_test(get_precompiled_header_handler_yields_expected_value)
