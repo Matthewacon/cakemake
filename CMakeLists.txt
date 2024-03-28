@@ -1,189 +1,486 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.25)
 
-project(
- cakemake
- VERSION 0.1.0
- LANGUAGES NONE
+include_guard(GLOBAL)
+
+#[[
+ TODO:
+ - [ ] create base CI images for all supported platforms and compilers (w/ gha-tool)
+ - [x] separate out gcc, clang and msvc support out to separate files
+ - [x] set up coverage report and numbers for llvm-cov and gcov
+ - [x] set up test report target
+ - [ ] set up benchmark targets
+ - [ ] for libraries:
+       - guard symbol auto-generation
+       - library versioning
+ - [ ] clang-format and clang-tidy targets
+ - [ ] support shipping separated debug symbols: https://www.tweag.io/blog/2023-11-23-debug-fission/
+ - [ ] SAST targets
+       - [ ] clang static analyzer target: https://www.youtube.com/watch?v=nTslG8HtKeA
+             - do both CTU and non-CTU since there may be non-overlapping cases
+             - do not use scan-build as it is 3rd party and does not support multi-TU analysis
+             - look into Z3 analyzer constraint (crosscheck-with-z3=true)
+       - [ ] nasa static analyzer target
+ - [ ] packaging:
+       - AUR (src / pkg)
+       - deb
+       - rpm
+       - vcpkg
+       - conan
+       - build2
+       - choco (windows)
+       - snap
+ - [ ] break apart cmake build system to separate repo (cakemake?)
+ - [ ] start work on c++
+]]
+
+string(TOUPPER "${PROJECT_NAME}" VARIABLE_PREFIX)
+set(VARIABLE_PREFIX "${VARIABLE_PREFIX}" PARENT_SCOPE)
+string(TOLOWER "${PROJECT_NAME}_" FUNCTION_PREFIX)
+set(FUNCTION_PREFIX "${FUNCTION_PREFIX}" PARENT_SCOPE)
+
+#[[disallow in-source builds]]
+if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+ message(FATAL_ERROR "In-source builds are not permitted")
+endif()
+
+#[[ensure compiler is supported]]
+#TODO: msvc, ClangCL, Intel icc, Intel dpc, IBM XL C, qcc, pcc, ack, cyg-win
+list(
+ APPEND "${VARIABLE_PREFIX}_SUPPORTED_COMPILER_IDS"
+  Clang
+  AppleClang
+  GNU
+  TinyCC
+)
+#set compiler shorthand identifier so we can easily check later
+if(
+ CMAKE_C_COMPILER_ID STREQUAL "Clang"
+ OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang"
+)
+ set("${VARIABLE_PREFIX}_COMPILER_ID" "Clang")
+elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+ set("${VARIABLE_PREFIX}_COMPILER_ID" "GNU")
+elseif(CMAKE_C_COMPILER_ID STREQUAL "TinyCC")
+ set("${VARIABLE_PREFIX}_COMPILER_ID" "TinyCC")
+else()
+ message(
+  FATAL_ERROR
+  "Unsupported compiler: '${CMAKE_C_COMPILER_ID}'\nSupported compilers "
+  "include: '${${VARIABLE_PREFIX}_SUPPORTED_COMPILER_IDS}'"
+ )
+endif()
+
+#ensure we updated the list of formally supported compilers
+list(
+ FIND
+  "${VARIABLE_PREFIX}_SUPPORTED_COMPILRERS"
+  "${CMAKE_C_COMPILER_ID}"
+  found
+)
+if(found STREQUAL -1)
+ message(
+  FATAL_ERROR
+  "Forgot to add support for new compiler '${CMAKE_C_COMPILER_ID}' to list of "
+  "supported compilers!"
+ )
+endif()
+unset(found)
+message(
+ STATUS
+ "${PROJECT_NAME}: Compiling with '${${VARIABLE_PREFIX}_COMPILER_ID}'"
 )
 
-#Enable CTest
-include(CTest)
-enable_testing()
+#[[
+ TODO: create project-specific top-level targets
 
-#Set up tests
-message(STATUS "Setting up tests:")
-file(GLOB_RECURSE CMAKE_TEST_SUITES "test/**.cmake")
-set(SUITE_ID 0)
-foreach(TEST_SUITE_PATH ${CMAKE_TEST_SUITES})
- #Bump suite ID and generate a unique target for it
- math(EXPR SUITE_ID "${SUITE_ID} + 1")
- set(SUITE_TARGET "suite_${SUITE_ID}")
+  - these are platform-specific, move to platform-specific directories
+]]
+#[[
+ top-level clean target
 
- #Get relative path of test
- file(
-  RELATIVE_PATH TEST_SUITE_RELATIVE_PATH
-  "${CMAKE_CURRENT_LIST_DIR}"
-  "${TEST_SUITE_PATH}"
+ custom user-specified clean targets can add themselves to this target as
+ dependencies and when this target is built, all user-specified clean targets
+ will be built and the auto-generated 'clean' target will be invoked
+]]
+add_custom_target(
+ clean-all
+ WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+ COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target clean
+ VERBATIM
+)
+
+#[[
+ top-level target to build all tests
+
+ tests that are declared as part of the project are added as dependencies of
+ this target, such that we can build this target to build all tests
+
+ NOTE: performs a no-op command by default, in case no user-specified coverage
+ targets are added as dependencies of this target
+]]
+add_custom_target(
+ build-test-all
+ COMMAND /usr/bin/bash -c "exit 0"
+ VERBATIM
+)
+
+#[[
+ top-level target to build and run all tests
+
+ NOTE: profile and coverage data is not cleaned between runs
+]]
+add_custom_target(
+ test-all
+ WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+ COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target build-test-all
+ COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target test
+ VERBATIM
+)
+
+#[[
+ top-level test coverage target
+
+ NOTE: performs a no-op command by default, in case no user-specified coverage
+ targets are added as dependencies of this target
+]]
+add_custom_target(
+ coverage
+ WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+ COMMAND /usr/bin/bash -c "exit 0"
+ VERBATIM
+)
+
+#[[
+ top-level test coverage clean up target
+
+ NOTE: performs a no-op command by default, in case no user-specified coverage
+ targets are added as dependencies of this target
+]]
+add_custom_target(
+ clean-coverage
+ WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+ COMMAND /usr/bin/bash -c "exit 0"
+ VERBATIM
+)
+add_dependencies(clean-all clean-coverage)
+
+#TODO: top-level benchmark target
+
+#[[
+ top-level CI target
+
+ runs:
+  1. `clean-coverage`: cleans all prior test profile data and test reports
+  2. `test-all`: runs all tests
+  3. `coverage`: generates test coverage reports using test profile data
+  4. `benchmark`: TODO
+]]
+add_custom_target(
+ ci
+ WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+ COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target clean-coverage
+ COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target test-all
+ COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target coverage
+ #TODO: add benchmarks to ci
+ #COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}" --target benchmark
+ VERBATIM
+)
+
+#[[
+ include compiler directory
+
+ functions used below are defined, for their respective platform / compiler
+ combination, in the subdirectories included in this switch block
+]]
+if("${${VARIABLE_PREFIX}_COMPILER_ID}" STREQUAL "Clang")
+ add_subdirectory(clang)
+elseif("${${VARIABLE_PREFIX}_COMPILER_ID}" STREQUAL "GNU")
+ add_subdirectory(gcc)
+elseif("${${VARIABLE_PREFIX}_COMPILER_ID}" STREQUAL "TinyCC")
+ add_subdirectory(tcc)
+else()
+ #reminder to update when we add support for a new compiler
+ message(
+  FATAL_ERROR
+  "Support for compiler '${${VARIABLE_PREFIX}_COMPILER_ID}' is umimplemented!"
  )
+endif()
 
- #[[
-  TODO Move the `include` invocation into a separate function so that variables
-  and other properties from the included files do not affect the global scope.
-  This function should yield the `SUITE_NAME` and `ALL_TESTS` variables back
-  to the caller, so that executors can be generated, targets can be set up, etc
- ]]
- #Include CMake test file
- message("Setting up suite '${TEST_SUITE_RELATIVE_PATH}'...")
- include(${TEST_SUITE_PATH})
+#[[
+ utility function for declaring a common test target
 
- #Validate test name
- string(LENGTH "${SUITE_NAME}" SUITE_NAME_LENGTH)
- if(SUITE_NAME_LENGTH EQUAL 0)
+ adds two new targets: `${target_name}` and `${target_name}-static` that can
+ be used wherever
+
+ usage: add_common_test_project(<name> <path>)
+]]
+function(
+ "${FUNCTION_PREFIX}add_common_test_project"
+  target_name
+  project_directory
+)
+ #ensure we were given a target name
+ string(LENGTH "${target_name}" target_name_length)
+ if(${target_name_length} EQUAL 0)
   message(
    FATAL_ERROR
-   "Test file '${TEST_SUITE_RELATIVE_PATH}' is missing a suite name! To "
-   "provide a suite name, add the following line to the top of your file:"
-   "\n set(SUITE_NAME \"My test suite name here\")"
+   "Missing target name!"
   )
  endif()
- unset(SUITE_NAME_LENGTH)
+ unset(target_name_length)
 
- #Skip test runner generation if suite did not define any tests
- string(LENGTH "${ALL_TESTS}" ALL_TESTS_LENGTH)
- if(ALL_TESTS_LENGTH EQUAL 0)
-  message("No tests defined for suite '${SUITE_NAME}'!")
-  continue()
+ #ensure we were given a project directory
+ string(LENGTH "${project_directory}" project_directory_length)
+ if(${project_directory_length} EQUAL 0)
+  message(
+   FATAL_ERROR
+   "Missing project directory!"
+  )
  endif()
- unset(ALL_TESTS_LENGTH)
+ unset(project_directory_length)
 
- #Get test suite relative path and file name, without extension
- string(
-  REPLACE
-  "\.cmake" ""
-  TEST_SUITE_PREFIX
-  "${TEST_SUITE_RELATIVE_PATH}"
+ #project compile and link flag variables
+ set(compiler_flags_var "${VARIABLE_PREFIX}_COMPILER_FLAGS")
+ set(linker_flags_var "${VARIABLE_PREFIX}_LINKER_FLAGS")
+
+ #find sources
+ set(source_directory "${project_directory}/src")
+ set(include_directory "${project_directory}/include")
+ file(
+  GLOB_RECURSE
+  TEST_COMMON_SOURCES
+  LIST_DIRECTORIES FALSE
+  "${source_directory}/*.c"
  )
 
- #Generate executor file for each test in the suite
- foreach(TEST_NAME ${ALL_TESTS})
-  message(" - Added: ${TEST_NAME}")
+ #shared target
+ add_library("${target_name}" SHARED)
+ target_sources("${target_name}" ${TEST_COMMON_SOURCES})
+ target_include_directories("${target_name}" PUBLIC "${include_directory}")
+ target_compile_options("${target_name}" PRIVATE ${${compiler_flags_var}})
+ target_link_options("${target_name}" PRIVATE ${${linker_flags_var}})
 
-  #[[
-   TODO Replace the include file path with a relative path (from the test
-   executor file to the actual test suite file)
-  ]]
-  #Create executor body
+ #static target
+ add_library("${target_name}-static" STATIC)
+ target_sources("${target_name}-static" ${TEST_COMMON_SOURCES})
+ target_include_directories("${target_name}" PUBLIC "${include_directory}")
+ target_compile_options("${target_name}" PRIVATE ${${compiler_flags_var}})
+ target_link_options("${target_name}" PRIVATE ${${linker_flags_var}})
+
+ #enable PIC for both targets
+ set_property(
+  TARGET "${target_name}" "${target_name}-static"
+  PROPERTY POSITION_INDEPENDENT_CODE TRUE
+ )
+
+ #append common test library targets to global target list for this project
+ list(
+  APPEND "${VARIABLE_PREFIX}_TARGETS"
+   "${target_name}"
+   "${target_name}-static"
+ )
+ set(
+  "${VARIABLE_PREFIX}_TARGETS"
+  "${${VARIABLE_PREFIX}_TARGETS}"
+  PARENT_SCOPE
+ )
+endfunction()
+
+#[[
+ usage: add_source_project(callback)
+
+ Expects a callback with the format
+ `function(define_my_target name_prefix dst_prefix)`; the provided callback
+ must:
+  - include the `name_prefix` parameter in the name during the declaration
+    of the target
+  - provide the target name in the destination variable specified by
+    `${dst_prefix}_NAME`
+  - provide the target source directory in the destination variable specified
+    by `${dst_prefix}_SOURCE_DIRECTORY`
+
+ Example:
+  function(define_my_target name_prefix dst_prefix)
+   set(name "${name_prefix}my-target")
+   set(source_dir "${PROJECT_SOURCE_DIR}/src")
+
+   add_library("${name}" SHARED)
+   add_sources("${name}" PUBLIC "${source_dir}/lib.c")
+   #...
+
+   set("${dst_prefix}_NAME" "${name}" PARENT_SCOPE)
+   set("${dst_prefix}_SOURCE_DIRECTORY" "${source_dir}" PARENT_SCOPE)
+  endfunction()
+]]
+function("${FUNCTION_PREFIX}add_source_project" callback)
+ #ensure we were provided with a callback
+ string(LENGTH "${callback}" callback_LENGTH)
+ if(${callback_LENGTH} EQUAL 0)
+  message(FATAL_ERROR "Missing callback function name!")
+ endif()
+ unset(callback_LENGTH)
+
+ #invoke callback with empty prefix to create global default importable target
+ cmake_language(CALL "${callback}" "" asp)
+
+ #ensure the callback provided us with the resulting target name
+ string(LENGTH "${asp_NAME}" asp_NAME_LENGTH)
+ if(${asp_NAME_LENGTH} EQUAL 0)
+  message(FATAL_ERROR "Target name not set in 'asp_NAME' variable!")
+ endif()
+ unset(asp_NAME_LENGTH)
+
+ #append target name to global list of targets
+ set(target_list_var "${VARIABLE_PREFIX}_TARGETS")
+ list(APPEND "${target_list_var}" "${asp_NAME}")
+ set("${target_list_var}" "${${target_list_var}}" PARENT_SCOPE)
+endfunction()
+
+#[[
+ utility function for adding test projects
+
+ usage: add_test_project(
+  NAME <name>
+  SOURCE_DIRECTORY <path>
+  INSTRUMENTED_DEPENDENCIES [<callbacks>...]
+  LINK_LIBRARIES [<libraries>...]
+ )
+]]
+function("${FUNCTION_PREFIX}add_test_project")
+ #parse arguments
+ cmake_parse_arguments(
+  atp
+  ""
+  "NAME;SOURCE_DIRECTORY"
+  "INSTRUMENTED_DEPENDENCIES;LINK_LIBRARIES"
+  ${ARGN}
+ )
+
+ #[[validate arguments]]
+ #ensure we were given a test project name
+ string(LENGTH "${atp_NAME}" atp_NAME_length)
+ if(${atp_NAME_length} EQUAL 0)
+  message(
+   FATAL_ERROR
+   "Missing test project name!"
+  )
+ endif()
+ unset(atp_NAME_length)
+
+ #ensure we were given a test project directory
+ string(LENGTH "${atp_SOURCE_DIRECTORY}" atp_SOURCE_DIRECTORY_length)
+ if(${atp_SOURCE_DIRECTORY_length} EQUAL 0)
+  message(
+   FATAL_ERROR
+   "Missing test project directory!"
+  )
+ endif()
+ unset(atp_SOURCE_DIRECTORY_length)
+
+ #[[define instrumented dependencies, if specified]]
+ set(global_target_list_var "${VARIABLE_PREFIX}_TARGETS")
+ if(DEFINED atp_INSTRUMENTED_DEPENDENCIES)
+  foreach(dependency IN LISTS atp_INSTRUMENTED_DEPENDENCIES)
+   #invoke callback with test name prefix to create test-specific target
+   cmake_language(CALL "${dependency}" "test-${atp_NAME}-" instrumented)
+
+   #validate `instrumented_NAME`
+   string(LENGTH "${instrumented_NAME}" instrumented_NAME_LENGTH)
+   if(${instrumented_NAME_LENGTH} EQUAL 0)
+    message(FATAL_ERROR "Target name not set in 'instrumented_NAME' variable!")
+   endif()
+   unset(instrumented_NAME_LENGTH)
+
+   #add target name to list of instrumented targets for use below
+   list(APPEND instrumented_dependencies "${instrumented_NAME}")
+
+   #add target name to global list of targets
+   list(APPEND "${global_target_list_var}" "${instrumented_NAME}")
+   set(
+    "${global_target_list_var}"
+    "${${global_target_list_var}}"
+    PARENT_SCOPE
+   )
+   unset(instrumented_NAME)
+  endforeach()
+ endif()
+
+ #find sources
+ set(source_directory "${atp_SOURCE_DIRECTORY}/src")
+ set(include_directory "${atp_SOURCE_DIRECTORY}/include")
+ set(test_output_directory "${PROJECT_BINARY_DIR}/test/${atp_NAME}")
+ set(test_project_output_directory "${test_output_directory}/build")
+ set(test_profile_output_directory "${test_output_directory}/profile")
+ set(test_report_output_directory "${test_output_directory}/report")
+ file(
+  GLOB_RECURSE
+  TEST_SOURCES
+  LIST_DIRECTORIES FALSE
+  "${source_directory}/*.c"
+ )
+
+ #configure tests
+ foreach(test_src IN LISTS TEST_SOURCES)
+  message(STATUS "processing test src: ${test_src}")
+  #transform test executable name
+  file(TO_CMAKE_PATH "${test_src}" test_src_path)
+  cmake_path(
+   RELATIVE_PATH test_src_path
+   BASE_DIRECTORY "${source_directory}"
+   OUTPUT_VARIABLE test_src_path
+  )
   string(
-   APPEND TEST_EXECUTOR
-   "include(${TEST_SUITE_PATH})"
-   "\nset(CURRENT_SUITE \"${SUITE_NAME}\")"
-   "\nset(CURRENT_TEST \"${TEST_NAME}\")"
-   "\n${TEST_NAME}()"
-   "\nunset(CURRENT_TEST)"
-   "\nunset(CURRENT_SUITE)"
+   REPLACE
+    "/"
+    "."
+    test_name
+   "${test_src_path}"
   )
+  string(LENGTH "${test_name}" test_name_length)
+  math(EXPR test_name_length "${test_name_length} - 2")
+  string(
+   SUBSTRING
+    "${test_name}"
+    0
+    ${test_name_length}
+    test_name
+  )
+  set(test_name "${test_name}")
+  unset(test_src_path)
 
-  #Write out executor body to file
-  set(TEST_EXECUTOR_PATH_VARIABLE "${TEST_NAME}_TEST_EXECUTOR_PATH")
+  #call platform/compiler-specific `add_test(...)` function
+  cmake_language(
+   CALL "${FUNCTION_PREFIX}add_test"
+    TEST_NAME "${test_name}"
+    TEST_PROJECT_NAME "${atp_NAME}"
+    TEST_SOURCES "${test_src}"
+    TEST_OUTPUT_DIRECTORY "${test_project_output_directory}"
+    TEST_PROFILE_OUTPUT_DIRECTORY "${test_profile_output_directory}"
+    TEST_REPORT_OUTPUT_DIRECTORY "${test_report_output_directory}"
+    TEST_INCLUDE_DIRECTORIES "${include_directory}"
+    TEST_LINK_INSTRUMENTED_DEPENDENCIES ${instrumented_dependencies}
+    TEST_LINK_LIBRARIES ${atp_LINK_LIBRARIES}
+  )
+  #NOTE: have to propagate `${VARIABLE_PREFIX}_TARGETS` due to scope nesting
   set(
-   "${TEST_EXECUTOR_PATH_VARIABLE}"
-   "${TEST_SUITE_PREFIX}__${TEST_NAME}.cmake"
+   "${global_target_list_var}"
+   "${${global_target_list_var}}"
+   PARENT_SCOPE
   )
-  file(
-   GENERATE
-   OUTPUT "${${TEST_EXECUTOR_PATH_VARIABLE}}"
-   CONTENT "${TEST_EXECUTOR}"
-   TARGET "${SUITE_TARGET}"
-  )
-
-  #Append executor file to list of dependencies for this test suite's target
-  list(APPEND SUITE_EXECUTORS "${${TEST_EXECUTOR_PATH_VARIABLE}}")
-  unset(TEST_EXECUTOR_PATH_VARIABLE)
-  unset(TEST_EXECUTOR)
  endforeach()
- unset(TEST_SUITE_PREFIX)
 
- #[[
-  Create custom target for this test suite and add all generated test executors
-  as file dependencies
- ]]
- add_custom_target(
-  "${SUITE_TARGET}" ALL
-  DEPENDS ${SUITE_EXECUTORS}
+ #call platform/compiler-specific `add_coverage_targets(...)` function
+ cmake_language(
+  CALL "${FUNCTION_PREFIX}add_coverage_targets"
+   TEST_PROJECT_NAME "${atp_NAME}"
+   TEST_PROFILE_OUTPUT_DIRECTORY "${test_profile_output_directory}"
+   TEST_REPORT_OUTPUT_DIRECTORY "${test_report_output_directory}"
+   TEST_LINK_INSTRUMENTED_DEPENDENCIES ${instrumented_dependencies}
  )
- unset(SUITE_TARGET)
-
- #Add CTest targets for each executor
- foreach(TEST_NAME ${ALL_TESTS})
-  set(TEST_EXECUTOR_PATH_VARIABLE "${TEST_NAME}_TEST_EXECUTOR_PATH")
-
-  #Add CTest target
-  add_test(
-   NAME "${SUITE_NAME}::${TEST_NAME}"
-   COMMAND ${CMAKE_COMMAND} -P "${${TEST_EXECUTOR_PATH_VARIABLE}}"
-  )
-
-  #[[
-   Set expected failure for test if `${TEST_NAME}_EXPECT_FAIL` is defined.
-
-   Note: Do not specify the `WILL_FAIL` test property if an explicit
-   PASS_REGEX is specified.
-  ]]
-  if(
-   DEFINED "${TEST_NAME}_EXPECT_FAIL"
-   AND NOT DEFINED "${TEST_NAME}_PASS_REGEX"
-  )
-   unset("${TEST_NAME}_EXPECT_FAIL")
-   set_tests_properties(
-    "${SUITE_NAME}::${TEST_NAME}"
-    PROPERTIES
-     WILL_FAIL TRUE
-   )
-  endif()
-
-  #Set pass regex property for test, if defined
-  if(DEFINED "${TEST_NAME}_PASS_REGEX")
-   set_tests_properties(
-    "${SUITE_NAME}::${TEST_NAME}"
-    PROPERTIES
-     PASS_REGULAR_EXPRESSION "${${TEST_NAME}_PASS_REGEX}"
-   )
-   unset("${TEST_NAME}_PASS_REGEX")
-  endif()
-
-  #Note: Do not currently have a need for supporting fail regex
-  ##Set fail regex property for test, if defined
-  #if(DEFINED "${TEST_NAME}_FAIL_REGEX")
-  # set_tests_properties(
-  #  "${SUITE_NAME}::${TEST_NAME}"
-  #  PROPERTIES
-  #   FAIL_REGULAR_EXPRESSION "${${TEST_NAME}_FAIL_REGEX}"
-  # )
-  # unset("${TEST_NAME}_FAIL_REGEX")
-  #endif()
-
-  #Clean up executor path variable
-  unset("${TEST_EXECUTOR_PATH_VARIABLE}")
-  unset(TEST_EXECUTOR_PATH_VARIABLE)
- endforeach()
- unset(SUITE_EXECUTORS)
-
- #Print suite information
- list(LENGTH ALL_TESTS ALL_TESTS_LENGTH)
- message(
-  "Successfully added ${ALL_TESTS_LENGTH} tests from suite '${SUITE_NAME}'!"
+ #NOTE: have to propagate `${VARIABLE_PREFIX}_TARGETS` due to scope nesting
+ set(
+  "${global_target_list_var}"
+  "${${global_target_list_var}}"
+  PARENT_SCOPE
  )
- unset(ALL_TESTS_LENGTH)
-
- #[[
-  Remove `SUITE_NAME` and `ALL_TESTS` to avoid unintentional conflicts with
-  other tests
- ]]
- unset(SUITE_NAME)
- unset(ALL_TESTS)
-
- unset(SUITE_TARGET)
-endforeach()
-
-#Clean up `CMAKE_TESTS`
-unset(CMAKE_TESTS)
+endfunction()
