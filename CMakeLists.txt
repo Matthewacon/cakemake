@@ -9,6 +9,7 @@ include_guard(GLOBAL)
  - [x] set up coverage report and numbers for llvm-cov and gcov
  - [x] set up test report target
  - [ ] set up benchmark targets
+ - [ ] set up automatic target signing
  - [ ] for libraries:
        - guard symbol auto-generation
        - library versioning
