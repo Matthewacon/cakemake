@@ -73,7 +73,7 @@ endif()
 #ensure we updated the list of formally supported compilers
 list(
  FIND
-  "${VARIABLE_PREFIX}_SUPPORTED_COMPILRERS"
+  "${VARIABLE_PREFIX}_SUPPORTED_COMPILER_IDS"
   "${CMAKE_C_COMPILER_ID}"
   found
 )
